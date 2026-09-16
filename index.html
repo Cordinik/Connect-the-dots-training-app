@@ -263,7 +263,7 @@
 
                     <div class="space-y-2">
                         <label class="text-xs text-slate-400 font-medium">Or Paste Raw Data:</label>
-                        <textarea id="paste-input" rows="4" placeholder="Step 1, Identify - Failure identification and confirmation&#10;Step 2, Any OEB? - Follow applicable OEB procedure&#10;Step 3, Memory items (if applicable)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
+                        <textarea id="paste-input" rows="4" placeholder="Step 1a, Identify - Failure identification and confirmation&#10;Step 1b, Any OEB? - Follow applicable OEB procedure&#10;Step 1e, Cross check - Verify target parameters&#10;Step 3, Memory items (if applicable)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
                         <div class="flex justify-between items-center gap-3">
                             <input type="text" id="custom-deck-title" placeholder="Deck Title (e.g. Failure Handling Sequence)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 flex-1">
                             <button onclick="importPastedData()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
@@ -461,6 +461,10 @@
         /* --------------------------------------------------
          * CORE DECK LOADING & BATCH MANAGEMENT
          * -------------------------------------------------- */
+        function naturalSortCompare(aStr, bStr) {
+            return aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
+        }
+
         function loadDeck(deck) {
             currentDeck = deck;
             allRows = [...deck.rows];
@@ -489,7 +493,7 @@
         }
 
         function createBatches() {
-            const rowCopy = [...allRows];
+            let rowCopy = [...allRows];
             batchedRows = [];
 
             if (activeGameMode === 'matching') {
@@ -498,7 +502,8 @@
                     batchedRows.push(shuffled.slice(i, i + BATCH_SIZE));
                 }
             } else {
-                // Keep sequence batches intact
+                // Sort left items naturally (e.g., Step 1a, Step 1b, Step 1e, Step 3, Step 5)
+                rowCopy.sort((a, b) => naturalSortCompare(a[0] || '', b[0] || ''));
                 for (let i = 0; i < rowCopy.length; i += BATCH_SIZE) {
                     batchedRows.push(rowCopy.slice(i, i + BATCH_SIZE));
                 }
@@ -709,7 +714,7 @@
             container.className = `grid grid-cols-1 md:grid-cols-2 gap-8 relative z-20 my-auto`;
             container.innerHTML = '';
 
-            // Left Column: Items requiring actions in order
+            // Left Column: Target Items Sequence (Sorted alphanumerically)
             const leftCol = document.createElement('div');
             leftCol.className = "flex flex-col gap-3";
             leftCol.innerHTML = `
@@ -747,7 +752,7 @@
             });
             leftCol.appendChild(slotsWrapper);
 
-            // Right Column: Action tiles (Scrambled or Sequential)
+            // Right Column: Action tiles (Scrambled or In-Order)
             const rightCol = document.createElement('div');
             rightCol.className = "flex flex-col gap-3";
             rightCol.innerHTML = `
