@@ -1,28 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full w-full overflow-hidden">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ATR Aviation Speed - 1-to-1 Matching Game</title>
-
-    <!-- iOS Web App Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ATR Speeds">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0f172a">
-
-    <!-- Embedded Web App Manifest -->
-    <link rel="manifest" href='data:application/manifest+json,{
-        "name": "ATR Aviation Speed Matcher",
-        "short_name": "ATR Speeds",
-        "start_url": ".",
-        "display": "standalone",
-        "background_color": "#0f172a",
-        "theme_color": "#0f172a",
-        "orientation": "any"
-    }'>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation Flight Deck Trainer</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -30,23 +11,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        html, body {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
             user-select: none;
             -webkit-user-select: none;
-            /* iOS Safe Area Padding */
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
         }
 
         .card-item {
@@ -67,7 +35,7 @@
         .card-matched {
             border-color: #22c55e !important;
             background-color: #14532d !important;
-            opacity: 0.75;
+            opacity: 0.85;
             cursor: default;
         }
 
@@ -95,22 +63,10 @@
             40%, 80% { transform: translateX(8px); }
         }
 
-        @keyframes pulse-success {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(1); }
-        }
-
-        .animate-pulse-success {
-            animation: pulse-success 0.3s ease-in-out;
-        }
-
-        /* SVG Overlay Line canvas styling */
         #connection-svg {
             pointer-events: none;
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -126,15 +82,16 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between transition-colors duration-300">
 
+    <!-- NAVIGATION HEADER -->
     <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700/60 sticky top-0 z-40 px-4 py-3">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showLandingPage()">
                 <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30">
                     <i data-lucide="plane" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-none text-slate-100">Aviation Speed Match</h1>
-                    <span class="text-xs text-slate-400">ATR Flight Deck Trainer</span>
+                    <h1 class="font-bold text-lg leading-none text-slate-100">Aviation Trainer</h1>
+                    <span id="current-mode-subtitle" class="text-xs text-slate-400">Flight Deck Practice System</span>
                 </div>
             </div>
 
@@ -167,7 +124,11 @@
                 <button id="sound-btn" onclick="toggleSound()" class="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors" title="Toggle Sound">
                     <i id="sound-icon" data-lucide="volume-2" class="w-5 h-5"></i>
                 </button>
-                <button onclick="openDeckModal()" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition-colors shadow-md shadow-blue-600/20">
+                <button onclick="showLandingPage()" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-sm transition-colors">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    <span>Modes</span>
+                </button>
+                <button id="decks-nav-btn" onclick="openDeckModal()" class="hidden flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition-colors shadow-md shadow-blue-600/20">
                     <i data-lucide="folder-open" class="w-4 h-4"></i>
                     <span>Decks</span>
                 </button>
@@ -175,78 +136,92 @@
         </div>
     </header>
 
-    <main class="max-w-6xl w-full mx-auto px-4 py-6 flex-1 flex flex-col justify-center relative overflow-y-auto">
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="max-w-7xl w-full mx-auto px-4 py-6 flex-1 flex flex-col justify-center relative">
         
-        <!-- Mobile Stats Bar -->
-        <div id="mobile-stats" class="flex md:hidden justify-between items-center bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700/50 mb-4 text-xs">
-            <div>Score: <span id="mobile-score" class="font-bold text-amber-400">0</span></div>
-            <div>Streak: <span id="mobile-streak" class="font-bold text-amber-500">0x</span></div>
-            <div>Time: <span id="mobile-timer" class="font-bold text-blue-400">00:00</span></div>
-            <div>Batch: <span id="mobile-batch" class="font-bold text-purple-400">1/1</span></div>
-        </div>
-
-        <!-- SVG Connection Overlay -->
-        <svg id="connection-svg" class="absolute inset-0 w-full h-full z-10 pointer-events-none">
-            <defs>
-                <filter id="glow-success" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="2" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-                <filter id="glow-active" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="2" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-            </defs>
-        </svg>
-
-        <!-- Matching Board Columns -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative z-20 my-auto">
-            
-            <!-- Left Column: Prompts/Questions -->
-            <div class="flex flex-col gap-3">
-                <div class="flex items-center justify-between px-2 mb-1">
-                    <h2 class="text-sm font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                        <i data-lucide="help-circle" class="w-4 h-4 text-blue-400"></i> Prompt / Limit
-                    </h2>
-                    <span id="left-progress" class="text-xs text-slate-500">0 matched</span>
-                </div>
-                <div id="left-column" class="flex flex-col gap-3">
-                    <!-- Prompts dynamically rendered here -->
-                </div>
+        <!-- VIEW 1: LANDING PAGE (GAME MODE SELECTION) -->
+        <section id="landing-view" class="max-w-4xl mx-auto w-full my-auto space-y-8">
+            <div class="text-center space-y-3">
+                <h2 class="text-3xl font-extrabold text-white">Select Game Mode</h2>
+                <p class="text-slate-400 text-sm max-w-lg mx-auto">Choose your training methodology to start practicing procedure speeds, limitations, and operational checklists.</p>
             </div>
 
-            <!-- Right Column: Answers -->
-            <div class="flex flex-col gap-3">
-                <div class="flex items-center justify-between px-2 mb-1">
-                    <h2 class="text-sm font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Target Speed / Value
-                    </h2>
-                    <span id="right-progress" class="text-xs text-slate-500">0 matched</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Mode Option 1: Multi-Column Matcher -->
+                <div onclick="selectGameMode('matching')" class="bg-slate-800/90 border-2 border-slate-700 hover:border-blue-500 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-xl flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 bg-blue-600/20 text-blue-400 rounded-xl flex items-center justify-center border border-blue-500/30 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                            <i data-lucide="columns" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">Multi-Column Matching</h3>
+                            <p class="text-sm text-slate-400 leading-relaxed">Connect matching elements across multiple columns simultaneously. Standard 2-column or advanced 3-column operational limits matching.</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex items-center gap-2 text-sm text-blue-400 font-semibold">
+                        <span>Select Mode</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
                 </div>
-                <div id="right-column" class="flex flex-col gap-3">
-                    <!-- Answers dynamically rendered here -->
+
+                <!-- Mode Option 2: Action Tile Sequence Trainer -->
+                <div onclick="selectGameMode('sequence')" class="bg-slate-800/90 border-2 border-slate-700 hover:border-emerald-500 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-xl flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 bg-emerald-600/20 text-emerald-400 rounded-xl flex items-center justify-center border border-emerald-500/30 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                            <i data-lucide="list-ordered" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">Action Tile Sequence Practice</h3>
+                            <p class="text-sm text-slate-400 leading-relaxed">Target items are listed on the left. Random action tiles are scrambled on the right—place them into correct sequential order to match the items.</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex items-center gap-2 text-sm text-emerald-400 font-semibold">
+                        <span>Select Mode</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
                 </div>
             </div>
+        </section>
 
-        </div>
-
-        <!-- Combo Multiplier Banner Popup -->
-        <div id="combo-banner" class="fixed top-24 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 transition-all duration-300 z-50 transform -translate-y-4">
-            <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black px-6 py-2 rounded-full shadow-2xl text-lg tracking-wider uppercase flex items-center gap-2 border-2 border-amber-300">
-                <i data-lucide="zap" class="w-5 h-5 fill-slate-950"></i>
-                <span id="combo-text">3x Combo! +300</span>
+        <!-- VIEW 2: GAME BOARD VIEW -->
+        <section id="game-view" class="hidden flex-1 flex flex-col justify-center">
+            <!-- Mobile Stats Bar -->
+            <div id="mobile-stats" class="flex md:hidden justify-between items-center bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700/50 mb-4 text-xs">
+                <div>Score: <span id="mobile-score" class="font-bold text-amber-400">0</span></div>
+                <div>Streak: <span id="mobile-streak" class="font-bold text-amber-500">0x</span></div>
+                <div>Time: <span id="mobile-timer" class="font-bold text-blue-400">00:00</span></div>
+                <div>Batch: <span id="mobile-batch" class="font-bold text-purple-400">1/1</span></div>
             </div>
-        </div>
+
+            <!-- SVG Connection Overlay -->
+            <svg id="connection-svg" class="absolute inset-0 w-full h-full z-10 pointer-events-none">
+                <defs>
+                    <filter id="glow-success" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="2" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                    <filter id="glow-active" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="2" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                </defs>
+            </svg>
+
+            <!-- Board Container -->
+            <div id="board-columns-container" class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 relative z-20 my-auto">
+                <!-- Dynamically rendered -->
+            </div>
+        </section>
 
     </main>
 
-    <!-- Modal 1: Deck Selector & Custom CSV Importer -->
+    <!-- MODAL 1: DECK MANAGEMENT MODAL -->
     <div id="deck-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-800 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
             
             <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i data-lucide="database" class="w-5 h-5 text-blue-400"></i> Select Study Deck
+                    <i data-lucide="database" class="w-5 h-5 text-blue-400"></i> Deck Management
                 </h3>
                 <button onclick="closeDeckModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -254,32 +229,37 @@
             </div>
 
             <div class="p-6 overflow-y-auto space-y-6">
-                <!-- Preset Decks Section -->
+                
+                <!-- Saved Decks for current account -->
                 <div>
-                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Pre-Loaded ATR Decks</h4>
-                    <div id="preset-decks-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <!-- Decks populated by JavaScript -->
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Your Account Loaded Decks</h4>
+                    <div id="custom-decks-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Populated dynamically from storage -->
+                    </div>
+                    <div id="no-decks-notice" class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-6 text-center text-slate-400 text-sm">
+                        <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
+                        No pre-loaded decks available. Import or paste a study deck below to start.
                     </div>
                 </div>
 
                 <hr class="border-slate-700">
 
-                <!-- Custom CSV / Excel Upload Section -->
+                <!-- Import / Upload Section -->
                 <div>
-                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Import Custom CSV or Text</h4>
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Import Custom CSV or Text Deck</h4>
+                    <p class="text-xs text-slate-400 mb-3">Supports 2-column (<code class="text-blue-300">Question, Answer</code>) or multi-column (<code class="text-blue-300">Item, Action 1, Action 2</code>) comma or tab separated data.</p>
                     
-                    <div id="drop-zone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-600 hover:border-blue-500 bg-slate-800/50 hover:bg-blue-500/5 p-6 rounded-xl text-center cursor-pointer transition-all mb-4 group">
-                        <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 group-hover:text-blue-400 mx-auto mb-2 transition-colors"></i>
+                    <div id="drop-zone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-600 hover:border-blue-500 bg-slate-800/50 hover:bg-blue-500/5 p-5 rounded-xl text-center cursor-pointer transition-all mb-4 group">
+                        <i data-lucide="upload-cloud" class="w-7 h-7 text-slate-400 group-hover:text-blue-400 mx-auto mb-1 transition-colors"></i>
                         <p class="text-sm font-medium text-slate-200">Click to upload CSV / TSV or drag and drop file</p>
-                        <p class="text-xs text-slate-400 mt-1">Supports comma (,) or tab (\t) separated pairs: Question, Answer</p>
                         <input type="file" id="file-input" accept=".csv, .tsv, .txt" class="hidden" onchange="handleFileSelect(event)">
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-xs text-slate-400 font-medium">Or Paste Data directly (One pair per line):</label>
-                        <textarea id="paste-input" rows="4" placeholder="VMO, 250 kt&#10;MMO, 0.55&#10;VA (ATR 42), 160 kt&#10;VA (ATR 72), 175 kt" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
+                        <label class="text-xs text-slate-400 font-medium">Or Paste Raw Data:</label>
+                        <textarea id="paste-input" rows="4" placeholder="ATR 72-600, VFE Flaps 15, 185 kt&#10;ATR 42-600, VFE Flaps 35, 150 kt" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
                         <div class="flex justify-between items-center gap-3">
-                            <input type="text" id="custom-deck-title" placeholder="Deck Title (e.g. My Custom V-Speeds)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 flex-1">
+                            <input type="text" id="custom-deck-title" placeholder="Deck Title (e.g. Flight Limits Deck)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 flex-1">
                             <button onclick="importPastedData()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
                                 <i data-lucide="plus" class="w-4 h-4"></i> Save & Play
                             </button>
@@ -287,24 +267,16 @@
                     </div>
                 </div>
 
-                <!-- Custom Saved Decks -->
-                <div id="custom-decks-container" class="hidden">
-                    <hr class="border-slate-700 my-4">
-                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Your Saved Custom Decks</h4>
-                    <div id="custom-decks-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <!-- Custom saved decks here -->
-                    </div>
-                </div>
-
             </div>
 
-            <div class="px-6 py-3 bg-slate-900/50 border-t border-slate-700/80 flex justify-end">
+            <div class="px-6 py-3 bg-slate-900/50 border-t border-slate-700/80 flex justify-between items-center">
+                <button onclick="showLandingPage()" class="text-xs text-slate-400 hover:text-slate-200">← Back to Game Mode Selection</button>
                 <button onclick="closeDeckModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded-lg">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal 2: Victory Screen -->
+    <!-- MODAL 2: VICTORY SCREEN -->
     <div id="victory-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-800 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-center space-y-6">
             
@@ -314,7 +286,7 @@
 
             <div>
                 <h3 class="text-2xl font-bold text-white mb-1">Session Completed!</h3>
-                <p id="deck-completed-title" class="text-sm text-slate-400">ATR Airspeeds & Operational Speeds</p>
+                <p id="deck-completed-title" class="text-sm text-slate-400">Selected Deck</p>
             </div>
 
             <div class="grid grid-cols-3 gap-3 bg-slate-900/70 p-4 rounded-xl border border-slate-700/60">
@@ -332,13 +304,6 @@
                 </div>
             </div>
 
-            <div id="review-section" class="text-left space-y-2 max-h-36 overflow-y-auto hidden pr-1">
-                <span class="text-xs font-semibold text-rose-400 uppercase tracking-wider">Review Mistakes:</span>
-                <div id="review-list" class="space-y-1 text-xs text-slate-300">
-                    <!-- Mistakes listed here -->
-                </div>
-            </div>
-
             <div class="flex gap-3 pt-2">
                 <button onclick="restartGame()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2">
                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Play Again
@@ -351,106 +316,28 @@
     </div>
 
     <script>
-        /* Prevent accidental iOS double-tap zoom */
-        document.addEventListener('touchstart', function(event) {
-            if (event.touches.length > 1) {
-                event.preventDefault();
-            }
-        }, { passive: false });
-
-        /* --------------------------------------------------
-         * PRESET DECKS (Built directly from ATR Data Tables)
-         * -------------------------------------------------- */
-        const PRESET_DECKS = [
-            {
-                id: 'atr-table-151',
-                title: 'Table 1.5.1: Airspeeds (IAS/CAS/GS)',
-                description: 'VMO, MMO, VA, VFE, VLE, VLO, VRA, VWO & VMCL limits',
-                pairs: [
-                    { prompt: "VMO (Max. Operating Speed)", answer: "250 kt (Both)" },
-                    { prompt: "MMO (Max. Operating Mach)", answer: "0.55 (Both)" },
-                    { prompt: "VA (Maneuvering Speed) [ATR 42]", answer: "160 kt" },
-                    { prompt: "VA (Maneuvering Speed) [ATR 72]", answer: "175 kt" },
-                    { prompt: "VFE / VFO Flaps 15 [ATR 42 / 72]", answer: "180 kt / 185 kt" },
-                    { prompt: "VFE / VFO Flaps 25 [ATR 42]", answer: "160 kt" },
-                    { prompt: "VFE / VFO Flaps 30 [ATR 72]", answer: "150 kt" },
-                    { prompt: "VFE / VFO Flaps 35 [ATR 42]", answer: "150 kt" },
-                    { prompt: "VLE (Landing Gear Extended) [ATR 42 / 72]", answer: "180 kt / 185 kt" },
-                    { prompt: "VLO RET (Landing Gear Retraction)", answer: "160 kt (Both)" },
-                    { prompt: "VLO EXT (Landing Gear Extension)", answer: "170 kt (Both)" },
-                    { prompt: "VRA (Max Rough Air Speed)", answer: "180 kt (Both)" },
-                    { prompt: "VWO (Max Wipers Operating Speed)", answer: "160 kt (Both)" },
-                    { prompt: "VMCL Flaps 15 (CAS) [ATR 42 / 72]", answer: "98.5 kt / 98 kt" },
-                    { prompt: "VMCL Flaps 25 (CAS) [ATR 42]", answer: "96 kt" },
-                    { prompt: "VMCL Flaps 30 (CAS) [ATR 72]", answer: "98 kt" },
-                    { prompt: "VMCL Flaps 35 (CAS) [ATR 42]", answer: "96.5 kt" },
-                    { prompt: "Max Tyre Speed (Ground Speed)", answer: "165 kt (Both)" }
-                ]
-            },
-            {
-                id: 'atr-table-1551',
-                title: 'Table 1.5.5.1: Maneuver Speeds VmHB/VmLB Limits',
-                description: 'VmHB high bank & VmLB limits across flap configurations',
-                pairs: [
-                    { prompt: "VmHB All Flaps (0,15,25,30,35)", answer: "1.23 VSR (>= VMCL on approach)" },
-                    { prompt: "VmLB Flaps 0 [ATR 42]", answer: "1.22 VSR" },
-                    { prompt: "VmLB Flaps 0 [ATR 72]", answer: "1.18 VSR" },
-                    { prompt: "VmLB Flaps 15 [Both Aircraft]", answer: "V2" },
-                    { prompt: "VmLB Flaps 25 [ATR 42]", answer: "Not used" },
-                    { prompt: "VmLB Flaps 30 [ATR 72]", answer: "Not used" },
-                    { prompt: "VmLB Flaps 35 [ATR 42]", answer: "Not used" }
-                ]
-            },
-            {
-                id: 'atr-table-1552',
-                title: 'Table 1.5.5.2: Minimum Maneuver Speeds Ratio',
-                description: 'VSR Ratios for VmHB and VmLB across flight phases',
-                pairs: [
-                    { prompt: "VmHB Flaps 0 [ATR 42 / 72]", answer: "1.5 VSR / 1.46 VSR" },
-                    { prompt: "VmLB Flaps 0 [ATR 42 / 72]", answer: "1.45 VSR / 1.40 VSR" },
-                    { prompt: "VmHB Flaps 15 [ATR 42 / 72]", answer: "1.41 VSR / 1.35 VSR" },
-                    { prompt: "VmLB Flaps 15 (T/O 2nd Segment) [42 / 72]", answer: "1.21 VSR / 1.22 VSR" },
-                    { prompt: "VmLB Flaps 15 (Final Takeoff) [Both]", answer: "1.27 VSR" },
-                    { prompt: "VmLB Flaps 15 (En-route) [ATR 42 / 72]", answer: "1.35 VSR / 1.30 VSR" },
-                    { prompt: "VmLB Flaps 15 (Go-Around) [ATR 72]", answer: "1.24 VSR" },
-                    { prompt: "VmHB Flaps 25 (Approach / Final) [ATR 42]", answer: "1.36 VSR" },
-                    { prompt: "VmLB Flaps 25 (Go-Around) [ATR 42]", answer: "1.29 VSR" },
-                    { prompt: "VmHB Flaps 30 [ATR 72]", answer: "1.32 VSR" },
-                    { prompt: "VmHB Flaps 35 [ATR 42]", answer: "1.35 VSR" }
-                ]
-            },
-            {
-                id: 'atr-table-1553',
-                title: 'Table 1.5.5.3: Min Maneuver Speeds (Kts)',
-                description: 'High bank operational maneuver speeds across configurations',
-                pairs: [
-                    { prompt: "Flaps 0 [ATR 42 / ATR 72]", answer: "175 kt / 180 kt" },
-                    { prompt: "Flaps 15 [ATR 42 / ATR 72]", answer: "145 kt / 150 kt" },
-                    { prompt: "Flaps 25 [ATR 42]", answer: "135 kt" },
-                    { prompt: "Flaps 30 [ATR 72]", answer: "135 kt" },
-                    { prompt: "Flaps 35 [ATR 42]", answer: "125 kt" }
-                ]
-            }
-        ];
-
         /* --------------------------------------------------
          * GAME STATE VARIABLES
          * -------------------------------------------------- */
+        let activeGameMode = null; // 'matching' or 'sequence'
         let currentDeck = null;
-        let allPairs = [];
-        let batchedPairs = [];
+        let numCols = 2;
+        let allRows = [];
+        let batchedRows = [];
         let currentBatchIndex = 0;
-        const BATCH_SIZE = 6; 
+        const BATCH_SIZE = 5;
 
-        let selectedLeft = null; 
-        let selectedRight = null; 
+        // Sequence Mode specific state
+        let sequenceSlots = []; 
 
-        let matchedPairs = new Map(); 
-        let matchedLeftIds = new Set();
-        let matchedRightIds = new Set();
+        // Matching Mode state
+        let currentSelections = {}; 
+        let matchedGroups = [];
+        let matchedCardIds = new Set();
+        let matchedTupleIndices = new Set();
+
         let totalAttempts = 0;
         let correctMatchesCount = 0;
-        let mistakes = [];
 
         let score = 0;
         let streak = 0;
@@ -459,7 +346,7 @@
         let soundEnabled = true;
 
         /* --------------------------------------------------
-         * AUDIO SYNTHESIZER (Web Audio API)
+         * AUDIO SYNTHESIZER
          * -------------------------------------------------- */
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
@@ -538,28 +425,52 @@
         }
 
         /* --------------------------------------------------
-         * CORE GAME ENGINE
+         * INITIALIZATION & NAVIGATION FLOW
          * -------------------------------------------------- */
         window.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
-            loadCustomDecksFromStorage();
-            renderPresetDecksUI();
-            
-            loadDeck(PRESET_DECKS[0]);
-
+            showLandingPage();
             window.addEventListener('resize', updateSvgLines);
         });
 
+        function showLandingPage() {
+            clearInterval(timerInterval);
+            document.getElementById('landing-view').classList.remove('hidden');
+            document.getElementById('game-view').classList.add('hidden');
+            document.getElementById('header-stats').classList.add('hidden');
+            document.getElementById('decks-nav-btn').classList.add('hidden');
+            closeDeckModal();
+            hideVictoryModal();
+        }
+
+        function selectGameMode(mode) {
+            activeGameMode = mode;
+            document.getElementById('current-mode-subtitle').innerText = 
+                mode === 'sequence' ? 'Action Tile Sequence Trainer' : 'Multi-Column Matching Game';
+            
+            // Per instructions: When selecting either game, the initial game page is deck management
+            openDeckModal();
+        }
+
+        /* --------------------------------------------------
+         * CORE DECK LOADING & BATCH MANAGEMENT
+         * -------------------------------------------------- */
         function loadDeck(deck) {
             currentDeck = deck;
-            allPairs = [...deck.pairs];
+            allRows = [...deck.rows];
+            numCols = deck.headers ? deck.headers.length : (allRows[0] ? allRows[0].length : 2);
             
             score = 0;
             streak = 0;
             totalAttempts = 0;
             correctMatchesCount = 0;
-            mistakes = [];
             currentBatchIndex = 0;
+
+            document.getElementById('landing-view').classList.add('hidden');
+            document.getElementById('game-view').classList.remove('hidden');
+            document.getElementById('header-stats').classList.remove('hidden');
+            document.getElementById('header-stats').classList.add('flex');
+            document.getElementById('decks-nav-btn').classList.remove('hidden');
 
             updateScoreboard();
             startTimer();
@@ -572,258 +483,424 @@
         }
 
         function createBatches() {
-            const shuffled = [...allPairs].sort(() => Math.random() - 0.5);
-            batchedPairs = [];
+            const shuffled = [...allRows].sort(() => Math.random() - 0.5);
+            batchedRows = [];
             for (let i = 0; i < shuffled.length; i += BATCH_SIZE) {
-                batchedPairs.push(shuffled.slice(i, i + BATCH_SIZE));
+                batchedRows.push(shuffled.slice(i, i + BATCH_SIZE));
             }
         }
 
         function loadBatch(index) {
             currentBatchIndex = index;
-            matchedPairs.clear();
-            matchedLeftIds.clear();
-            matchedRightIds.clear();
-            selectedLeft = null;
-            selectedRight = null;
+            matchedGroups = [];
+            matchedCardIds.clear();
+            matchedTupleIndices.clear();
+            currentSelections = {};
             clearSvgLines();
 
-            const currentBatch = batchedPairs[currentBatchIndex] || [];
-
-            const leftItems = currentBatch.map((pair, idx) => ({
-                id: `l-${idx}`,
-                prompt: pair.prompt,
-                answer: pair.answer
-            })).sort(() => Math.random() - 0.5);
-
-            const rightItems = currentBatch.map((pair, idx) => ({
-                id: `r-${idx}`,
-                answer: pair.answer
-            })).sort(() => Math.random() - 0.5);
-
-            renderBoard(leftItems, rightItems);
+            if (activeGameMode === 'sequence') {
+                renderSequenceBoard();
+            } else {
+                renderMatchingBoard();
+            }
             updateBatchDisplay();
         }
 
-        function renderBoard(leftItems, rightItems) {
-            const leftCol = document.getElementById('left-column');
-            const rightCol = document.getElementById('right-column');
+        /* --------------------------------------------------
+         * GAME MODE 1: MULTI-COLUMN MATCHING
+         * -------------------------------------------------- */
+        function renderMatchingBoard() {
+            const currentBatch = batchedRows[currentBatchIndex] || [];
+            const container = document.getElementById('board-columns-container');
+            if (!container) return;
 
-            if (!leftCol || !rightCol) return;
+            container.className = `grid grid-cols-1 md:grid-cols-${numCols} gap-4 md:gap-8 relative z-20 my-auto`;
+            container.innerHTML = '';
 
-            leftCol.innerHTML = '';
-            rightCol.innerHTML = '';
+            const boardColumns = [];
+            for (let colIdx = 0; colIdx < numCols; colIdx++) {
+                const items = currentBatch.map((rowTuple, tupleIdx) => ({
+                    cardId: `card-c${colIdx}-t${tupleIdx}`,
+                    tupleId: tupleIdx,
+                    colIndex: colIdx,
+                    text: rowTuple[colIdx] || ''
+                })).sort(() => Math.random() - 0.5);
 
-            leftItems.forEach(item => {
-                const div = document.createElement('div');
-                div.id = `left-${item.id}`;
-                div.className = `card-item bg-slate-800 border-2 border-slate-700/80 hover:border-blue-500/50 rounded-xl p-4 cursor-pointer text-sm font-medium text-slate-200 shadow-md flex items-center justify-between gap-3`;
-                div.onclick = () => selectLeft(item);
-                div.innerHTML = `
-                    <span class="leading-snug">${escapeHtml(item.prompt)}</span>
-                    <div class="card-dot w-3.5 h-3.5 rounded-full border-2 border-slate-500/60 transition-all flex-shrink-0"></div>
+                boardColumns.push({
+                    header: currentDeck.headers ? currentDeck.headers[colIdx] : `Column ${colIdx + 1}`,
+                    items: items
+                });
+            }
+
+            boardColumns.forEach((colData, colIdx) => {
+                const colDiv = document.createElement('div');
+                colDiv.className = "flex flex-col gap-3";
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = "flex items-center justify-between px-2 mb-1";
+                headerDiv.innerHTML = `
+                    <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
+                        <i data-lucide="${colIdx === 0 ? 'help-circle' : 'layers'}" class="w-4 h-4 text-blue-400"></i>
+                        <span>${escapeHtml(colData.header)}</span>
+                    </h2>
+                    <span id="col-${colIdx}-progress" class="text-xs text-slate-500">0 matched</span>
                 `;
-                leftCol.appendChild(div);
+                colDiv.appendChild(headerDiv);
+
+                const itemsWrapper = document.createElement('div');
+                itemsWrapper.className = "flex flex-col gap-3";
+                itemsWrapper.id = `column-wrapper-${colIdx}`;
+
+                colData.items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.id = item.cardId;
+                    card.className = "card-item bg-slate-800 border-2 border-slate-700/80 hover:border-blue-500/50 rounded-xl p-3.5 cursor-pointer text-sm font-medium text-slate-200 shadow-md flex items-center justify-between gap-2";
+                    card.onclick = () => selectCard(item);
+
+                    const isLeftmost = (colIdx === 0);
+                    const isRightmost = (colIdx === numCols - 1);
+
+                    let cardInnerHtml = '';
+                    if (!isLeftmost) cardInnerHtml += `<div class="card-dot card-dot-left w-3.5 h-3.5 rounded-full border-2 border-slate-500/60 transition-all flex-shrink-0"></div>`;
+                    cardInnerHtml += `<span class="leading-snug flex-1 ${isRightmost ? 'text-right font-mono text-blue-300' : (isLeftmost ? 'text-left font-semibold text-slate-100' : 'text-center text-amber-200/90')}">${escapeHtml(item.text)}</span>`;
+                    if (!isRightmost) cardInnerHtml += `<div class="card-dot card-dot-right w-3.5 h-3.5 rounded-full border-2 border-slate-500/60 transition-all flex-shrink-0"></div>`;
+
+                    card.innerHTML = cardInnerHtml;
+                    itemsWrapper.appendChild(card);
+                });
+
+                colDiv.appendChild(itemsWrapper);
+                container.appendChild(colDiv);
             });
 
-            rightItems.forEach(item => {
-                const div = document.createElement('div');
-                div.id = `right-${item.id}`;
-                div.className = `card-item bg-slate-800 border-2 border-slate-700/80 hover:border-blue-500/50 rounded-xl p-4 cursor-pointer text-sm font-medium text-slate-200 shadow-md flex items-center justify-between gap-3`;
-                div.onclick = () => selectRight(item);
-                div.innerHTML = `
-                    <div class="card-dot w-3.5 h-3.5 rounded-full border-2 border-slate-500/60 transition-all flex-shrink-0"></div>
-                    <span class="leading-snug text-right font-mono text-blue-300">${escapeHtml(item.answer)}</span>
-                `;
-                rightCol.appendChild(div);
-            });
-
+            if (window.lucide) lucide.createIcons();
             updateProgressText();
         }
 
+        function selectCard(item) {
+            if (!item || matchedCardIds.has(item.cardId)) return;
+            initAudio();
+
+            const colIdx = item.colIndex;
+            if (currentSelections[colIdx] && currentSelections[colIdx].cardId === item.cardId) {
+                delete currentSelections[colIdx];
+            } else {
+                currentSelections[colIdx] = item;
+                playSound('select');
+            }
+
+            updateCardStyles();
+            checkSelectionsMatch();
+            updateSvgLines();
+        }
+
         function updateCardStyles() {
-            const leftCards = document.querySelectorAll('#left-column .card-item');
-            leftCards.forEach(card => {
-                if (!card) return;
-                const id = card.id.replace('left-', '');
-                
-                card.classList.remove('card-selected', 'card-matched');
-                if (matchedLeftIds.has(id)) {
-                    card.classList.add('card-matched');
-                } else if (selectedLeft && selectedLeft.id === id) {
-                    card.classList.add('card-selected');
-                }
-            });
+            for (let colIdx = 0; colIdx < numCols; colIdx++) {
+                const wrapper = document.getElementById(`column-wrapper-${colIdx}`);
+                if (!wrapper) continue;
 
-            const rightCards = document.querySelectorAll('#right-column .card-item');
-            rightCards.forEach(card => {
-                if (!card) return;
-                const id = card.id.replace('right-', '');
+                Array.from(wrapper.children).forEach(cardEl => {
+                    const cardId = cardEl.id;
+                    cardEl.classList.remove('card-selected', 'card-matched');
 
-                card.classList.remove('card-selected', 'card-matched');
-                if (matchedRightIds.has(id)) {
-                    card.classList.add('card-matched');
-                } else if (selectedRight && selectedRight.id === id) {
-                    card.classList.add('card-selected');
-                }
-            });
-        }
-
-        function selectLeft(item) {
-            if (!item || matchedLeftIds.has(item.id)) return;
-            initAudio();
-
-            if (selectedLeft && selectedLeft.id === item.id) {
-                selectedLeft = null;
-            } else {
-                selectedLeft = item;
-                playSound('select');
+                    if (matchedCardIds.has(cardId)) {
+                        cardEl.classList.add('card-matched');
+                    } else if (currentSelections[colIdx] && currentSelections[colIdx].cardId === cardId) {
+                        cardEl.classList.add('card-selected');
+                    }
+                });
             }
-
-            updateCardStyles();
-            checkMatch();
-            updateSvgLines();
         }
 
-        function selectRight(item) {
-            if (!item || matchedRightIds.has(item.id)) return;
-            initAudio();
-
-            if (selectedRight && selectedRight.id === item.id) {
-                selectedRight = null;
-            } else {
-                selectedRight = item;
-                playSound('select');
-            }
-
-            updateCardStyles();
-            checkMatch();
-            updateSvgLines();
-        }
-
-        function checkMatch() {
-            if (!selectedLeft || !selectedRight) return;
-
-            totalAttempts++;
-            const leftEl = document.getElementById(`left-${selectedLeft.id}`);
-            const rightEl = document.getElementById(`right-${selectedRight.id}`);
-
-            if (selectedLeft.answer === selectedRight.answer) {
-                matchedPairs.set(selectedLeft.id, selectedRight.id);
-                matchedLeftIds.add(selectedLeft.id);
-                matchedRightIds.add(selectedRight.id);
-
-                correctMatchesCount++;
-                streak++;
-
-                playSound('match');
-
-                if (leftEl) leftEl.classList.add('animate-pulse-success');
-                if (rightEl) rightEl.classList.add('animate-pulse-success');
-
-                const basePoints = 100;
-                const streakBonus = Math.min(streak * 20, 200);
-                const gainedPoints = basePoints + streakBonus;
-                score += gainedPoints;
-
-                if (streak >= 3) {
-                    showComboBanner(`${streak}x STREAK! +${gainedPoints}`);
+        function checkSelectionsMatch() {
+            const selectedCols = Object.keys(currentSelections).map(Number).sort((a,b) => a - b);
+            if (selectedCols.length === numCols) {
+                totalAttempts++;
+                const currentBatch = batchedRows[currentBatchIndex] || [];
+                const selectedTexts = [];
+                for (let i = 0; i < numCols; i++) {
+                    selectedTexts.push(currentSelections[i].text.trim());
                 }
 
-                selectedLeft = null;
-                selectedRight = null;
-
-                updateCardStyles();
-                updateScoreboard();
-                updateProgressText();
-
-                const currentBatch = batchedPairs[currentBatchIndex] || [];
-                if (matchedPairs.size === currentBatch.length) {
-                    setTimeout(() => {
-                        if (currentBatchIndex + 1 < batchedPairs.length) {
-                            loadBatch(currentBatchIndex + 1);
-                        } else {
-                            endGame();
-                        }
-                    }, 500);
-                }
-
-            } else {
-                streak = 0;
-                playSound('error');
-
-                mistakes.push({
-                    prompt: selectedLeft.prompt,
-                    correctAnswer: selectedLeft.answer,
-                    userAnswer: selectedRight.answer
+                let matchingTupleIndex = currentBatch.findIndex((row, idx) => {
+                    if (matchedTupleIndices.has(idx)) return false;
+                    return row.every((val, colIdx) => val.trim() === selectedTexts[colIdx]);
                 });
 
-                if (leftEl) leftEl.classList.add('card-error');
-                if (rightEl) rightEl.classList.add('card-error');
+                let isMatch = (matchingTupleIndex !== -1);
+                if (!isMatch) {
+                    isMatch = allRows.some(row => row.every((val, colIdx) => val.trim() === selectedTexts[colIdx]));
+                }
 
-                const tempLeft = leftEl;
-                const tempRight = rightEl;
+                const selectedArray = Object.values(currentSelections);
+                if (isMatch) {
+                    if (matchingTupleIndex !== -1) matchedTupleIndices.add(matchingTupleIndex);
+                    const groupIds = selectedArray.map(item => item.cardId);
+                    matchedGroups.push(groupIds);
+                    groupIds.forEach(id => matchedCardIds.add(id));
 
-                setTimeout(() => {
-                    if (tempLeft) tempLeft.classList.remove('card-error');
-                    if (tempRight) tempRight.classList.remove('card-error');
+                    correctMatchesCount++;
+                    streak++;
+                    playSound('match');
+
+                    score += (numCols * 75) + Math.min(streak * 25, 250);
+
+                    currentSelections = {};
                     updateCardStyles();
-                }, 400);
+                    updateScoreboard();
+                    updateProgressText();
 
-                selectedLeft = null;
-                selectedRight = null;
-
-                updateCardStyles();
-                updateScoreboard();
+                    if (matchedGroups.length === currentBatch.length) {
+                        setTimeout(() => {
+                            if (currentBatchIndex + 1 < batchedRows.length) loadBatch(currentBatchIndex + 1);
+                            else endGame();
+                        }, 500);
+                    }
+                } else {
+                    streak = 0;
+                    playSound('error');
+                    selectedArray.forEach(item => {
+                        const el = document.getElementById(item.cardId);
+                        if (el) el.classList.add('card-error');
+                    });
+                    setTimeout(() => {
+                        selectedArray.forEach(item => {
+                            const el = document.getElementById(item.cardId);
+                            if (el) el.classList.remove('card-error');
+                        });
+                        updateCardStyles();
+                    }, 400);
+                    currentSelections = {};
+                    updateCardStyles();
+                    updateScoreboard();
+                }
+                setTimeout(updateSvgLines, 30);
             }
-
-            setTimeout(updateSvgLines, 30);
         }
 
         /* --------------------------------------------------
-         * SVG CONNECTION LINES DRAWING
+         * GAME MODE 2: ACTION TILE SEQUENCE TRAINER
          * -------------------------------------------------- */
-        function getDotCenter(cardEl) {
+        function renderSequenceBoard() {
+            const currentBatch = batchedRows[currentBatchIndex] || [];
+            const container = document.getElementById('board-columns-container');
+            if (!container) return;
+
+            container.className = `grid grid-cols-1 md:grid-cols-2 gap-8 relative z-20 my-auto`;
+            container.innerHTML = '';
+
+            // Left Column: Items requiring actions in order
+            const leftCol = document.createElement('div');
+            leftCol.className = "flex flex-col gap-3";
+            leftCol.innerHTML = `
+                <div class="px-2 mb-1">
+                    <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
+                        <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Target Items Sequence</span>
+                    </h2>
+                </div>
+            `;
+
+            sequenceSlots = currentBatch.map((row, idx) => ({
+                id: `seq-slot-${idx}`,
+                expectedAction: row.slice(1).join(' - ') || row[1] || '',
+                itemTitle: row[0],
+                placedTile: null
+            }));
+
+            const slotsWrapper = document.createElement('div');
+            slotsWrapper.className = "flex flex-col gap-3";
+
+            sequenceSlots.forEach((slot, idx) => {
+                const slotEl = document.createElement('div');
+                slotEl.className = "bg-slate-800 border-2 border-slate-700/80 rounded-xl p-3.5 flex flex-col md:flex-row items-center justify-between gap-3 shadow-md";
+                slotEl.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-300 flex items-center justify-center">${idx + 1}</span>
+                        <span class="font-semibold text-slate-100 text-sm">${escapeHtml(slot.itemTitle)}</span>
+                    </div>
+                    <div id="${slot.id}" onclick="returnTileFromSlot(${idx})" class="w-full md:w-1/2 min-h-[44px] border-2 border-dashed border-slate-600 rounded-lg p-2 flex items-center justify-center text-xs text-slate-400 bg-slate-900/40 cursor-pointer hover:border-slate-500 transition-colors">
+                        Click practice tile to place action
+                    </div>
+                `;
+                slotsWrapper.appendChild(slotEl);
+            });
+            leftCol.appendChild(slotsWrapper);
+
+            // Right Column: Scrambled action tiles
+            const rightCol = document.createElement('div');
+            rightCol.className = "flex flex-col gap-3";
+            rightCol.innerHTML = `
+                <div class="px-2 mb-1">
+                    <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
+                        <i data-lucide="shuffle" class="w-4 h-4 text-blue-400"></i>
+                        <span>Random Action Tiles</span>
+                    </h2>
+                </div>
+            `;
+
+            const tilesWrapper = document.createElement('div');
+            tilesWrapper.id = "tiles-pool";
+            tilesWrapper.className = "flex flex-col gap-3";
+
+            // Prepare scrambled action tiles
+            const actionTiles = currentBatch.map((row, idx) => ({
+                id: `tile-${idx}`,
+                text: row.slice(1).join(' - ') || row[1] || ''
+            })).sort(() => Math.random() - 0.5);
+
+            actionTiles.forEach(tile => {
+                const tileEl = document.createElement('div');
+                tileEl.id = tile.id;
+                tileEl.onclick = () => placeTileInNextSlot(tile);
+                tileEl.className = "card-item bg-slate-800 border-2 border-blue-500/40 hover:border-blue-400 rounded-xl p-3.5 cursor-pointer text-sm font-medium text-blue-200 shadow-md flex items-center justify-between";
+                tileEl.innerHTML = `<span>${escapeHtml(tile.text)}</span> <i data-lucide="arrow-left" class="w-4 h-4 text-blue-400"></i>`;
+                tilesWrapper.appendChild(tileEl);
+            });
+
+            rightCol.appendChild(tilesWrapper);
+
+            container.appendChild(leftCol);
+            container.appendChild(rightCol);
+
+            // Action verify button
+            const actionContainer = document.createElement('div');
+            actionContainer.className = "col-span-1 md:col-span-2 flex justify-center mt-4";
+            actionContainer.innerHTML = `
+                <button onclick="verifySequenceOrder()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i> Verify Action Sequence
+                </button>
+            `;
+            container.appendChild(actionContainer);
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function placeTileInNextSlot(tile) {
+            initAudio();
+            const emptySlot = sequenceSlots.find(s => s.placedTile === null);
+            if (!emptySlot) return;
+
+            emptySlot.placedTile = tile;
+            playSound('select');
+
+            const tileEl = document.getElementById(tile.id);
+            if (tileEl) tileEl.classList.add('hidden');
+
+            const slotEl = document.getElementById(emptySlot.id);
+            if (slotEl) {
+                slotEl.className = "w-full md:w-1/2 min-h-[44px] bg-blue-900/40 border-2 border-blue-500 rounded-lg p-2 flex items-center justify-between text-xs font-bold text-blue-200 cursor-pointer shadow-sm";
+                slotEl.innerHTML = `<span>${escapeHtml(tile.text)}</span> <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>`;
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        function returnTileFromSlot(slotIdx) {
+            const slot = sequenceSlots[slotIdx];
+            if (!slot || !slot.placedTile) return;
+
+            playSound('select');
+            const tileEl = document.getElementById(slot.placedTile.id);
+            if (tileEl) tileEl.classList.remove('hidden');
+
+            slot.placedTile = null;
+            const slotEl = document.getElementById(slot.id);
+            if (slotEl) {
+                slotEl.className = "w-full md:w-1/2 min-h-[44px] border-2 border-dashed border-slate-600 rounded-lg p-2 flex items-center justify-center text-xs text-slate-400 bg-slate-900/40 cursor-pointer hover:border-slate-500 transition-colors";
+                slotEl.innerText = "Click practice tile to place action";
+            }
+        }
+
+        function verifySequenceOrder() {
+            totalAttempts++;
+            const allPlaced = sequenceSlots.every(s => s.placedTile !== null);
+            if (!allPlaced) {
+                playSound('error');
+                return;
+            }
+
+            let correct = true;
+            sequenceSlots.forEach(slot => {
+                const isMatch = slot.placedTile.text.trim() === slot.expectedAction.trim();
+                const slotEl = document.getElementById(slot.id);
+                if (!isMatch) {
+                    correct = false;
+                    if (slotEl) {
+                        slotEl.classList.remove('border-blue-500', 'bg-blue-900/40');
+                        slotEl.classList.add('border-rose-500', 'bg-rose-900/40');
+                    }
+                } else if (slotEl) {
+                    slotEl.classList.remove('border-blue-500', 'bg-blue-900/40');
+                    slotEl.classList.add('border-emerald-500', 'bg-emerald-900/40');
+                }
+            });
+
+            if (correct) {
+                playSound('match');
+                score += 500 + (streak * 50);
+                streak++;
+                updateScoreboard();
+
+                setTimeout(() => {
+                    if (currentBatchIndex + 1 < batchedRows.length) loadBatch(currentBatchIndex + 1);
+                    else endGame();
+                }, 800);
+            } else {
+                playSound('error');
+                streak = 0;
+                updateScoreboard();
+            }
+        }
+
+        /* --------------------------------------------------
+         * SVG CONTINUOUS CONNECTION LINES
+         * -------------------------------------------------- */
+        function getDotCenter(cardEl, direction) {
             if (!cardEl) return { x: 0, y: 0 };
-            const dot = cardEl.querySelector('.card-dot');
+            const dot = cardEl.querySelector(direction === 'right' ? '.card-dot-right' : '.card-dot-left');
             if (dot) {
                 const r = dot.getBoundingClientRect();
                 return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
             }
             const r = cardEl.getBoundingClientRect();
-            const isLeft = cardEl.id.startsWith('left-');
-            return { x: isLeft ? r.right - 12 : r.left + 12, y: r.top + r.height / 2 };
+            return { x: direction === 'right' ? r.right - 10 : r.left + 10, y: r.top + r.height / 2 };
         }
 
         function updateSvgLines() {
+            if (activeGameMode !== 'matching') {
+                clearSvgLines();
+                return;
+            }
             const svg = document.getElementById('connection-svg');
             if (!svg) return;
-
             clearSvgLines();
 
-            if (selectedLeft && selectedRight) {
-                const leftEl = document.getElementById(`left-${selectedLeft.id}`);
-                const rightEl = document.getElementById(`right-${selectedRight.id}`);
-                if (leftEl && rightEl) {
-                    drawLine(svg, leftEl, rightEl, '#3b82f6', 3, true, 'glow-active');
+            const selCols = Object.keys(currentSelections).map(Number).sort((a,b) => a - b);
+            for (let i = 0; i < selCols.length - 1; i++) {
+                const colA = selCols[i];
+                const colB = selCols[i+1];
+                if (colB === colA + 1) {
+                    const cardA = currentSelections[colA];
+                    const cardB = currentSelections[colB];
+                    const elA = document.getElementById(cardA.cardId);
+                    const elB = document.getElementById(cardB.cardId);
+                    if (elA && elB) drawLineBetweenCards(svg, elA, elB, '#3b82f6', 3, true, 'glow-active');
                 }
             }
 
-            matchedPairs.forEach((rightId, leftId) => {
-                const leftEl = document.getElementById(`left-${leftId}`);
-                const rightEl = document.getElementById(`right-${rightId}`);
-                if (leftEl && rightEl) {
-                    drawLine(svg, leftEl, rightEl, '#22c55e', 2.5, false, 'glow-success');
+            matchedGroups.forEach(groupIds => {
+                for (let i = 0; i < groupIds.length - 1; i++) {
+                    const elA = document.getElementById(groupIds[i]);
+                    const elB = document.getElementById(groupIds[i+1]);
+                    if (elA && elB) drawLineBetweenCards(svg, elA, elB, '#22c55e', 2.5, false, 'glow-success');
                 }
             });
         }
 
-        function drawLine(svg, el1, el2, strokeColor, strokeWidth, isDashed, filterId) {
-            if (!svg || !el1 || !el2) return;
-
+        function drawLineBetweenCards(svg, cardA, cardB, strokeColor, strokeWidth, isDashed, filterId) {
             const svgRect = svg.getBoundingClientRect();
-            const p1 = getDotCenter(el1);
-            const p2 = getDotCenter(el2);
+            const p1 = getDotCenter(cardA, 'right');
+            const p2 = getDotCenter(cardB, 'left');
 
             const x1 = p1.x - svgRect.left;
             const y1 = p1.y - svgRect.top;
@@ -832,7 +909,7 @@
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             const dx = Math.abs(x2 - x1);
-            const curve = Math.max(dx * 0.4, 30);
+            const curve = Math.max(dx * 0.4, 25);
             const d = `M ${x1} ${y1} C ${x1 + curve} ${y1}, ${x2 - curve} ${y2}, ${x2} ${y2}`;
 
             path.setAttribute('d', d);
@@ -854,7 +931,7 @@
         }
 
         /* --------------------------------------------------
-         * TIMERS & SCOREBOARD UPDATES
+         * SCOREBOARD & TIMERS
          * -------------------------------------------------- */
         function startTimer() {
             clearInterval(timerInterval);
@@ -890,41 +967,26 @@
         }
 
         function updateProgressText() {
-            const currentBatch = batchedPairs[currentBatchIndex] || [];
+            const currentBatch = batchedRows[currentBatchIndex] || [];
             const totalInBatch = currentBatch.length;
-            const count = matchedPairs.size;
+            const count = matchedGroups.length;
 
-            const leftProg = document.getElementById('left-progress');
-            const rightProg = document.getElementById('right-progress');
-            if (leftProg) leftProg.innerText = `${count}/${totalInBatch} matched`;
-            if (rightProg) rightProg.innerText = `${count}/${totalInBatch} matched`;
+            for (let c = 0; c < numCols; c++) {
+                const prog = document.getElementById(`col-${c}-progress`);
+                if (prog) prog.innerText = `${count}/${totalInBatch} matched`;
+            }
         }
 
         function updateBatchDisplay() {
-            const text = `${currentBatchIndex + 1}/${batchedPairs.length || 1}`;
+            const text = `${currentBatchIndex + 1}/${batchedRows.length || 1}`;
             const batchEl = document.getElementById('batch-display');
             const mobileBatchEl = document.getElementById('mobile-batch');
             if (batchEl) batchEl.innerText = text;
             if (mobileBatchEl) mobileBatchEl.innerText = text;
         }
 
-        function showComboBanner(text) {
-            const banner = document.getElementById('combo-banner');
-            const comboText = document.getElementById('combo-text');
-            if (!banner || !comboText) return;
-
-            comboText.innerText = text;
-            banner.classList.remove('opacity-0', '-translate-y-4');
-            banner.classList.add('opacity-100', 'translate-y-0');
-
-            setTimeout(() => {
-                banner.classList.remove('opacity-100', 'translate-y-0');
-                banner.classList.add('opacity-0', '-translate-y-4');
-            }, 1200);
-        }
-
         /* --------------------------------------------------
-         * VICTORY / END GAME
+         * VICTORY & RESTART
          * -------------------------------------------------- */
         function endGame() {
             clearInterval(timerInterval);
@@ -932,40 +994,12 @@
 
             const accuracy = totalAttempts > 0 ? Math.round((correctMatchesCount / totalAttempts) * 100) : 100;
             
-            const deckTitleEl = document.getElementById('deck-completed-title');
-            const finalScoreEl = document.getElementById('final-score');
-            const finalAccEl = document.getElementById('final-accuracy');
-            const finalTimeEl = document.getElementById('final-time');
-            const timerDisplay = document.getElementById('timer-display');
+            document.getElementById('deck-completed-title').innerText = currentDeck ? currentDeck.title : '';
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+            document.getElementById('final-time').innerText = document.getElementById('timer-display').innerText;
 
-            if (deckTitleEl && currentDeck) deckTitleEl.innerText = currentDeck.title;
-            if (finalScoreEl) finalScoreEl.innerText = score;
-            if (finalAccEl) finalAccEl.innerText = `${accuracy}%`;
-            if (finalTimeEl && timerDisplay) finalTimeEl.innerText = timerDisplay.innerText;
-
-            const reviewSection = document.getElementById('review-section');
-            const reviewList = document.getElementById('review-list');
-            
-            if (reviewList) {
-                reviewList.innerHTML = '';
-                if (mistakes.length > 0) {
-                    if (reviewSection) reviewSection.classList.remove('hidden');
-                    const uniqueMistakes = Array.from(new Set(mistakes.map(m => m.prompt)))
-                        .map(prompt => mistakes.find(m => m.prompt === prompt));
-
-                    uniqueMistakes.forEach(m => {
-                        const item = document.createElement('div');
-                        item.className = "bg-slate-900/90 p-2 rounded border border-rose-500/30";
-                        item.innerHTML = `<span class="text-slate-200 font-semibold">${escapeHtml(m.prompt)}</span>: <span class="text-emerald-400 font-mono">${escapeHtml(m.correctAnswer)}</span>`;
-                        reviewList.appendChild(item);
-                    });
-                } else if (reviewSection) {
-                    reviewSection.classList.add('hidden');
-                }
-            }
-
-            const vicModal = document.getElementById('victory-modal');
-            if (vicModal) vicModal.classList.remove('hidden');
+            document.getElementById('victory-modal').classList.remove('hidden');
         }
 
         function restartGame() {
@@ -973,47 +1007,19 @@
         }
 
         function hideVictoryModal() {
-            const vicModal = document.getElementById('victory-modal');
-            if (vicModal) vicModal.classList.add('hidden');
+            document.getElementById('victory-modal').classList.add('hidden');
         }
 
         /* --------------------------------------------------
-         * CSV IMPORT & DECK MANAGEMENT
+         * ACCOUNT DECK MANAGEMENT & CSV IMPORTER
          * -------------------------------------------------- */
         function openDeckModal() {
-            const modal = document.getElementById('deck-modal');
-            if (modal) modal.classList.remove('hidden');
+            loadCustomDecksFromStorage();
+            document.getElementById('deck-modal').classList.remove('hidden');
         }
 
         function closeDeckModal() {
-            const modal = document.getElementById('deck-modal');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        function renderPresetDecksUI() {
-            const grid = document.getElementById('preset-decks-grid');
-            if (!grid) return;
-            grid.innerHTML = '';
-
-            PRESET_DECKS.forEach(deck => {
-                const card = document.createElement('div');
-                card.className = "bg-slate-900/80 border border-slate-700/80 hover:border-blue-500 p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between group";
-                card.onclick = () => loadDeck(deck);
-                card.innerHTML = `
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <h5 class="font-bold text-sm text-slate-100 group-hover:text-blue-400 transition-colors">${escapeHtml(deck.title)}</h5>
-                            <span class="text-[10px] bg-blue-500/20 text-blue-300 font-mono px-2 py-0.5 rounded-full">${deck.pairs.length} pairs</span>
-                        </div>
-                        <p class="text-xs text-slate-400">${escapeHtml(deck.description)}</p>
-                    </div>
-                    <div class="mt-3 flex items-center gap-1 text-xs text-blue-400 font-medium">
-                        <span>Play Deck</span> <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-            if (window.lucide) lucide.createIcons();
+            document.getElementById('deck-modal').classList.add('hidden');
         }
 
         function handleFileSelect(event) {
@@ -1034,11 +1040,9 @@
             const titleInput = document.getElementById('custom-deck-title');
             
             const text = pasteInput ? pasteInput.value.trim() : '';
-            const title = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : "Custom Study Deck";
+            const title = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : "Account Study Deck";
             
-            if (!text) {
-                return;
-            }
+            if (!text) return;
             parseAndSaveCSV(text, title);
             if (pasteInput) pasteInput.value = '';
             if (titleInput) titleInput.value = '';
@@ -1046,31 +1050,34 @@
 
         function parseAndSaveCSV(text, title) {
             const lines = text.split(/\r?\n/);
-            const pairs = [];
+            const rows = [];
+            let detectedCols = 2;
 
             lines.forEach(line => {
                 if (!line.trim()) return;
                 let parts = line.split('\t');
-                if (parts.length < 2) {
-                    parts = line.split(',');
-                }
+                if (parts.length < 2) parts = line.split(',');
 
-                if (parts.length >= 2) {
-                    const prompt = parts[0].trim().replace(/^["']|["']$/g, '');
-                    const answer = parts.slice(1).join(',').trim().replace(/^["']|["']$/g, '');
-                    if (prompt && answer) {
-                        pairs.push({ prompt, answer });
-                    }
+                const cleanParts = parts.map(p => p.trim().replace(/^["']|["']$/g, '')).filter(p => p !== '');
+                if (cleanParts.length >= 2) {
+                    rows.push(cleanParts);
+                    if (cleanParts.length > detectedCols) detectedCols = cleanParts.length;
                 }
             });
 
-            if (pairs.length === 0) return;
+            if (rows.length === 0) return;
+
+            const headers = [];
+            for (let i = 0; i < detectedCols; i++) {
+                headers.push(i === 0 ? "Target Item" : `Action Step ${i}`);
+            }
 
             const newDeck = {
                 id: 'custom-' + Date.now(),
                 title: title,
-                description: `Custom imported deck with ${pairs.length} items.`,
-                pairs: pairs
+                description: `${detectedCols} Columns, ${rows.length} Items.`,
+                headers: headers,
+                rows: rows
             };
 
             saveCustomDeckToStorage(newDeck);
@@ -1080,9 +1087,9 @@
 
         function saveCustomDeckToStorage(deck) {
             try {
-                const saved = JSON.parse(localStorage.getItem('aviation_matching_custom_decks') || '[]');
+                const saved = JSON.parse(localStorage.getItem('aviation_account_decks') || '[]');
                 saved.push(deck);
-                localStorage.setItem('aviation_matching_custom_decks', JSON.stringify(saved));
+                localStorage.setItem('aviation_account_decks', JSON.stringify(saved));
             } catch (e) {
                 console.warn('Storage write error', e);
             }
@@ -1090,34 +1097,36 @@
 
         function loadCustomDecksFromStorage() {
             try {
-                const saved = JSON.parse(localStorage.getItem('aviation_matching_custom_decks') || '[]');
-                const container = document.getElementById('custom-decks-container');
+                const saved = JSON.parse(localStorage.getItem('aviation_account_decks') || '[]');
                 const grid = document.getElementById('custom-decks-grid');
+                const notice = document.getElementById('no-decks-notice');
 
-                if (!container || !grid) return;
+                if (!grid) return;
 
                 if (saved.length === 0) {
-                    container.classList.add('hidden');
+                    grid.innerHTML = '';
+                    if (notice) notice.classList.remove('hidden');
                     return;
                 }
 
-                container.classList.remove('hidden');
+                if (notice) notice.classList.add('hidden');
                 grid.innerHTML = '';
 
                 saved.forEach(deck => {
                     const card = document.createElement('div');
+                    const colCount = deck.headers ? deck.headers.length : 2;
                     card.className = "bg-slate-900/80 border border-slate-700/80 hover:border-emerald-500 p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between group relative";
                     card.onclick = () => loadDeck(deck);
                     card.innerHTML = `
                         <div>
                             <div class="flex items-center justify-between mb-1">
                                 <h5 class="font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition-colors">${escapeHtml(deck.title)}</h5>
-                                <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded-full">${deck.pairs.length} pairs</span>
+                                <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded-full">${colCount} Cols (${deck.rows.length} items)</span>
                             </div>
                             <p class="text-xs text-slate-400">${escapeHtml(deck.description)}</p>
                         </div>
                         <div class="mt-3 flex items-center justify-between">
-                            <span class="text-xs text-emerald-400 font-medium flex items-center gap-1">Play Deck <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
+                            <span class="text-xs text-emerald-400 font-medium flex items-center gap-1">Load & Play Deck <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
                             <button onclick="deleteCustomDeck('${deck.id}', event)" class="text-slate-500 hover:text-rose-400 p-1" title="Delete Deck">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
@@ -1134,9 +1143,9 @@
         function deleteCustomDeck(id, event) {
             if (event) event.stopPropagation();
             try {
-                let saved = JSON.parse(localStorage.getItem('aviation_matching_custom_decks') || '[]');
+                let saved = JSON.parse(localStorage.getItem('aviation_account_decks') || '[]');
                 saved = saved.filter(d => d.id !== id);
-                localStorage.setItem('aviation_matching_custom_decks', JSON.stringify(saved));
+                localStorage.setItem('aviation_account_decks', JSON.stringify(saved));
                 loadCustomDecksFromStorage();
             } catch (e) {
                 console.warn('Storage delete error', e);
