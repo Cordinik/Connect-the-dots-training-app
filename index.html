@@ -103,6 +103,11 @@
                     <span id="score-display" class="font-bold text-amber-400">0</span>
                 </div>
                 <div class="flex items-center gap-2">
+                    <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
+                    <span class="text-xs text-slate-400">Accuracy:</span>
+                    <span id="accuracy-display" class="font-bold text-emerald-400">100%</span>
+                </div>
+                <div class="flex items-center gap-2">
                     <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
                     <span class="text-xs text-slate-400">Streak:</span>
                     <span id="streak-display" class="font-bold text-amber-500">0x</span>
@@ -172,7 +177,7 @@
                         </div>
                         <div>
                             <h3 class="text-xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">Action Tile Sequence Practice</h3>
-                            <p class="text-sm text-slate-400 leading-relaxed">Target items are listed on the left. Random action tiles are scrambled on the right—place them into correct sequential order to match the items.</p>
+                            <p class="text-sm text-slate-400 leading-relaxed">Target items are listed on the left. Practice tiles can be scrambled or in sequence—place them into correct order to match the items.</p>
                         </div>
                     </div>
                     <div class="mt-6 flex items-center gap-2 text-sm text-emerald-400 font-semibold">
@@ -188,6 +193,7 @@
             <!-- Mobile Stats Bar -->
             <div id="mobile-stats" class="flex md:hidden justify-between items-center bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700/50 mb-4 text-xs">
                 <div>Score: <span id="mobile-score" class="font-bold text-amber-400">0</span></div>
+                <div>Acc: <span id="mobile-accuracy" class="font-bold text-emerald-400">100%</span></div>
                 <div>Streak: <span id="mobile-streak" class="font-bold text-amber-500">0x</span></div>
                 <div>Time: <span id="mobile-timer" class="font-bold text-blue-400">00:00</span></div>
                 <div>Batch: <span id="mobile-batch" class="font-bold text-purple-400">1/1</span></div>
@@ -257,9 +263,9 @@
 
                     <div class="space-y-2">
                         <label class="text-xs text-slate-400 font-medium">Or Paste Raw Data:</label>
-                        <textarea id="paste-input" rows="4" placeholder="ATR 72-600, VFE Flaps 15, 185 kt&#10;ATR 42-600, VFE Flaps 35, 150 kt" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
+                        <textarea id="paste-input" rows="4" placeholder="Step 1, Identify - Failure identification and confirmation&#10;Step 2, Any OEB? - Follow applicable OEB procedure&#10;Step 3, Memory items (if applicable)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
                         <div class="flex justify-between items-center gap-3">
-                            <input type="text" id="custom-deck-title" placeholder="Deck Title (e.g. Flight Limits Deck)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 flex-1">
+                            <input type="text" id="custom-deck-title" placeholder="Deck Title (e.g. Failure Handling Sequence)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 flex-1">
                             <button onclick="importPastedData()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
                                 <i data-lucide="plus" class="w-4 h-4"></i> Save & Play
                             </button>
@@ -327,8 +333,9 @@
         let currentBatchIndex = 0;
         const BATCH_SIZE = 5;
 
-        // Sequence Mode specific state
-        let sequenceSlots = []; 
+        // Sequence Mode state
+        let sequenceSlots = [];
+        let sequenceOrderMode = 'scrambled'; // 'scrambled' or 'sequential'
 
         // Matching Mode state
         let currentSelections = {}; 
@@ -336,6 +343,7 @@
         let matchedCardIds = new Set();
         let matchedTupleIndices = new Set();
 
+        // Accuracy & Stats Tracking
         let totalAttempts = 0;
         let correctMatchesCount = 0;
 
@@ -447,8 +455,6 @@
             activeGameMode = mode;
             document.getElementById('current-mode-subtitle').innerText = 
                 mode === 'sequence' ? 'Action Tile Sequence Trainer' : 'Multi-Column Matching Game';
-            
-            // Per instructions: When selecting either game, the initial game page is deck management
             openDeckModal();
         }
 
@@ -483,10 +489,19 @@
         }
 
         function createBatches() {
-            const shuffled = [...allRows].sort(() => Math.random() - 0.5);
+            const rowCopy = [...allRows];
             batchedRows = [];
-            for (let i = 0; i < shuffled.length; i += BATCH_SIZE) {
-                batchedRows.push(shuffled.slice(i, i + BATCH_SIZE));
+
+            if (activeGameMode === 'matching') {
+                const shuffled = rowCopy.sort(() => Math.random() - 0.5);
+                for (let i = 0; i < shuffled.length; i += BATCH_SIZE) {
+                    batchedRows.push(shuffled.slice(i, i + BATCH_SIZE));
+                }
+            } else {
+                // Keep sequence batches intact
+                for (let i = 0; i < rowCopy.length; i += BATCH_SIZE) {
+                    batchedRows.push(rowCopy.slice(i, i + BATCH_SIZE));
+                }
             }
         }
 
@@ -619,17 +634,17 @@
                 const currentBatch = batchedRows[currentBatchIndex] || [];
                 const selectedTexts = [];
                 for (let i = 0; i < numCols; i++) {
-                    selectedTexts.push(currentSelections[i].text.trim());
+                    selectedTexts.push(currentSelections[i].text.trim().toLowerCase());
                 }
 
                 let matchingTupleIndex = currentBatch.findIndex((row, idx) => {
                     if (matchedTupleIndices.has(idx)) return false;
-                    return row.every((val, colIdx) => val.trim() === selectedTexts[colIdx]);
+                    return row.every((val, colIdx) => val.trim().toLowerCase() === selectedTexts[colIdx]);
                 });
 
                 let isMatch = (matchingTupleIndex !== -1);
                 if (!isMatch) {
-                    isMatch = allRows.some(row => row.every((val, colIdx) => val.trim() === selectedTexts[colIdx]));
+                    isMatch = allRows.some(row => row.every((val, colIdx) => val.trim().toLowerCase() === selectedTexts[colIdx]));
                 }
 
                 const selectedArray = Object.values(currentSelections);
@@ -681,6 +696,11 @@
         /* --------------------------------------------------
          * GAME MODE 2: ACTION TILE SEQUENCE TRAINER
          * -------------------------------------------------- */
+        function toggleSequenceOrderMode(mode) {
+            sequenceOrderMode = mode;
+            loadBatch(currentBatchIndex);
+        }
+
         function renderSequenceBoard() {
             const currentBatch = batchedRows[currentBatchIndex] || [];
             const container = document.getElementById('board-columns-container');
@@ -693,7 +713,7 @@
             const leftCol = document.createElement('div');
             leftCol.className = "flex flex-col gap-3";
             leftCol.innerHTML = `
-                <div class="px-2 mb-1">
+                <div class="px-2 mb-1 flex items-center justify-between">
                     <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
                         <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
                         <span>Target Items Sequence</span>
@@ -727,15 +747,24 @@
             });
             leftCol.appendChild(slotsWrapper);
 
-            // Right Column: Scrambled action tiles
+            // Right Column: Action tiles (Scrambled or Sequential)
             const rightCol = document.createElement('div');
             rightCol.className = "flex flex-col gap-3";
             rightCol.innerHTML = `
-                <div class="px-2 mb-1">
+                <div class="px-2 mb-1 flex items-center justify-between">
                     <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
                         <i data-lucide="shuffle" class="w-4 h-4 text-blue-400"></i>
-                        <span>Random Action Tiles</span>
+                        <span>Action Practice Tiles</span>
                     </h2>
+                    <!-- Sequential / Scrambled Toggle -->
+                    <div class="flex items-center bg-slate-900/90 border border-slate-700 rounded-lg p-0.5 text-xs">
+                        <button onclick="toggleSequenceOrderMode('scrambled')" class="px-2 py-1 rounded-md font-medium transition-colors ${sequenceOrderMode === 'scrambled' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+                            Scrambled
+                        </button>
+                        <button onclick="toggleSequenceOrderMode('sequential')" class="px-2 py-1 rounded-md font-medium transition-colors ${sequenceOrderMode === 'sequential' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+                            In-Order
+                        </button>
+                    </div>
                 </div>
             `;
 
@@ -743,11 +772,14 @@
             tilesWrapper.id = "tiles-pool";
             tilesWrapper.className = "flex flex-col gap-3";
 
-            // Prepare scrambled action tiles
-            const actionTiles = currentBatch.map((row, idx) => ({
+            let actionTiles = currentBatch.map((row, idx) => ({
                 id: `tile-${idx}`,
                 text: row.slice(1).join(' - ') || row[1] || ''
-            })).sort(() => Math.random() - 0.5);
+            }));
+
+            if (sequenceOrderMode === 'scrambled') {
+                actionTiles = actionTiles.sort(() => Math.random() - 0.5);
+            }
 
             actionTiles.forEach(tile => {
                 const tileEl = document.createElement('div');
@@ -816,15 +848,16 @@
             const allPlaced = sequenceSlots.every(s => s.placedTile !== null);
             if (!allPlaced) {
                 playSound('error');
+                updateScoreboard();
                 return;
             }
 
-            let correct = true;
+            let batchCorrect = true;
             sequenceSlots.forEach(slot => {
-                const isMatch = slot.placedTile.text.trim() === slot.expectedAction.trim();
+                const isMatch = slot.placedTile.text.trim().toLowerCase() === slot.expectedAction.trim().toLowerCase();
                 const slotEl = document.getElementById(slot.id);
                 if (!isMatch) {
-                    correct = false;
+                    batchCorrect = false;
                     if (slotEl) {
                         slotEl.classList.remove('border-blue-500', 'bg-blue-900/40');
                         slotEl.classList.add('border-rose-500', 'bg-rose-900/40');
@@ -835,7 +868,8 @@
                 }
             });
 
-            if (correct) {
+            if (batchCorrect) {
+                correctMatchesCount++;
                 playSound('match');
                 score += 500 + (streak * 50);
                 streak++;
@@ -959,11 +993,17 @@
             const mobileScoreEl = document.getElementById('mobile-score');
             const streakEl = document.getElementById('streak-display');
             const mobileStreakEl = document.getElementById('mobile-streak');
+            const accuracyEl = document.getElementById('accuracy-display');
+            const mobileAccuracyEl = document.getElementById('mobile-accuracy');
+
+            const accuracy = totalAttempts > 0 ? Math.round((correctMatchesCount / totalAttempts) * 100) : 100;
 
             if (scoreEl) scoreEl.innerText = score;
             if (mobileScoreEl) mobileScoreEl.innerText = score;
             if (streakEl) streakEl.innerText = `${streak}x`;
             if (mobileStreakEl) mobileStreakEl.innerText = `${streak}x`;
+            if (accuracyEl) accuracyEl.innerText = `${accuracy}%`;
+            if (mobileAccuracyEl) mobileAccuracyEl.innerText = `${accuracy}%`;
         }
 
         function updateProgressText() {
