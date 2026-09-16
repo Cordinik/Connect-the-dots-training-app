@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full w-full overflow-hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ATR Aviation Speed - 1-to-1 Matching Game</title>
+
+    <!-- iOS Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ATR Speeds">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- Embedded Web App Manifest -->
+    <link rel="manifest" href='data:application/manifest+json,{
+        "name": "ATR Aviation Speed Matcher",
+        "short_name": "ATR Speeds",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#0f172a",
+        "theme_color": "#0f172a",
+        "orientation": "any"
+    }'>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            /* iOS Safe Area Padding */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        .card-item {
+            transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+            touch-action: manipulation;
+        }
+
+        .card-item:hover:not(.card-matched) {
+            transform: translateY(-2px);
+        }
+
+        .card-selected {
+            border-color: #3b82f6 !important;
+            background-color: #1e3a8a !important;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .card-matched {
+            border-color: #22c55e !important;
+            background-color: #14532d !important;
+            opacity: 0.75;
+            cursor: default;
+        }
+
+        .card-matched .card-dot {
+            background-color: #22c55e !important;
+            border-color: #4ade80 !important;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+        }
+
+        .card-selected .card-dot {
+            background-color: #3b82f6 !important;
+            border-color: #60a5fa !important;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+        }
+
+        .card-error {
+            animation: shake 0.4s ease-in-out;
+            border-color: #ef4444 !important;
+            background-color: #7f1d1d !important;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        @keyframes pulse-success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        .animate-pulse-success {
+            animation: pulse-success 0.3s ease-in-out;
+        }
+
+        /* SVG Overlay Line canvas styling */
+        #connection-svg {
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between transition-colors duration-300">
+
+    <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700/60 sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30">
+                    <i data-lucide="plane" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-none text-slate-100">Aviation Speed Match</h1>
+                    <span class="text-xs text-slate-400">ATR Flight Deck Trainer</span>
+                </div>
+            </div>
+
+            <!-- Stats Bar (Header) -->
+            <div id="header-stats" class="hidden md:flex items-center gap-6 bg-slate-900/60 px-4 py-1.5 rounded-xl border border-slate-700/50">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
+                    <span class="text-xs text-slate-400">Score:</span>
+                    <span id="score-display" class="font-bold text-amber-400">0</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+                    <span class="text-xs text-slate-400">Streak:</span>
+                    <span id="streak-display" class="font-bold text-amber-500">0x</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="timer" class="w-4 h-4 text-blue-400"></i>
+                    <span class="text-xs text-slate-400">Time:</span>
+                    <span id="timer-display" class="font-bold text-blue-400">00:00</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="layers" class="w-4 h-4 text-purple-400"></i>
+                    <span class="text-xs text-slate-400">Batch:</span>
+                    <span id="batch-display" class="font-bold text-purple-400">1/1</span>
+                </div>
+            </div>
+
+            <!-- Header Action Controls -->
+            <div class="flex items-center gap-2">
+                <button id="sound-btn" onclick="toggleSound()" class="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors" title="Toggle Sound">
+                    <i id="sound-icon" data-lucide="volume-2" class="w-5 h-5"></i>
+                </button>
+                <button onclick="openDeckModal()" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition-colors shadow-md shadow-blue-600/20">
+                    <i data-lucide="folder-open" class="w-4 h-4"></i>
+                    <span>Decks</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl w-full mx-auto px-4 py-6 flex-1 flex flex-col justify-center relative overflow-y-auto">
+        
+        <!-- Mobile Stats Bar -->
+        <div id="mobile-stats" class="flex md:hidden justify-between items-center bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700/50 mb-4 text-xs">
+            <div>Score: <span id="mobile-score" class="font-bold text-amber-400">0</span></div>
+            <div>Streak: <span id="mobile-streak" class="font-bold text-amber-500">0x</span></div>
+            <div>Time: <span id="mobile-timer" class="font-bold text-blue-400">00:00</span></div>
+            <div>Batch: <span id="mobile-batch" class="font-bold text-purple-400">1/1</span></div>
+        </div>
+
+        <!-- SVG Connection Overlay -->
+        <svg id="connection-svg" class="absolute inset-0 w-full h-full z-10 pointer-events-none">
+            <defs>
+                <filter id="glow-success" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                <filter id="glow-active" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+        </svg>
+
+        <!-- Matching Board Columns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative z-20 my-auto">
+            
+            <!-- Left Column: Prompts/Questions -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between px-2 mb-1">
+                    <h2 class="text-sm font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-2">
+                        <i data-lucide="help-circle" class="w-4 h-4 text-blue-400"></i> Prompt / Limit
+                    </h2>
+                    <span id="left-progress" class="text-xs text-slate-500">0 matched</span>
+                </div>
+                <div id="left-column" class="flex flex-col gap-3">
+                    <!-- Prompts dynamically rendered here -->
+                </div>
+            </div>
+
+            <!-- Right Column: Answers -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between px-2 mb-1">
+                    <h2 class="text-sm font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Target Speed / Value
+                    </h2>
+                    <span id="right-progress" class="text-xs text-slate-500">0 matched</span>
+                </div>
+                <div id="right-column" class="flex flex-col gap-3">
+                    <!-- Answers dynamically rendered here -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Combo Multiplier Banner Popup -->
+        <div id="combo-banner" class="fixed top-24 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 transition-all duration-300 z-50 transform -translate-y-4">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black px-6 py-2 rounded-full shadow-2xl text-lg tracking-wider uppercase flex items-center gap-2 border-2 border-amber-300">
+                <i data-lucide="zap" class="w-5 h-5 fill-slate-950"></i>
+                <span id="combo-text">3x Combo! +300</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal 1: Deck Selector & Custom CSV Importer -->
+    <div id="deck-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            
+            <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="database" class="w-5 h-5 text-blue-400"></i> Select Study Deck
+                </h3>
+                <button onclick="closeDeckModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- Preset Decks Section -->
+                <div>
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Pre-Loaded ATR Decks</h4>
+                    <div id="preset-decks-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Decks populated by JavaScript -->
+                    </div>
+                </div>
+
+                <hr class="border-slate-700">
+
+                <!-- Custom CSV / Excel Upload Section -->
+                <div>
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Import Custom CSV or Text</h4>
+                    
+                    <div id="drop-zone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-600 hover:border-blue-500 bg-slate-800/50 hover:bg-blue-500/5 p-6 rounded-xl text-center cursor-pointer transition-all mb-4 group">
+                        <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 group-hover:text-blue-400 mx-auto mb-2 transition-colors"></i>
+                        <p class="text-sm font-medium text-slate-200">Click to upload CSV / TSV or drag and drop file</p>
+                        <p class="text-xs text-slate-400 mt-1">Supports comma (,) or tab (\t) separated pairs: Question, Answer</p>
+                        <input type="file" id="file-input" accept=".csv, .tsv, .txt" class="hidden" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-xs text-slate-400 font-medium">Or Paste Data directly (One pair per line):</label>
+                        <textarea id="paste-input" rows="4" placeholder="VMO, 250 kt&#10;MMO, 0.55&#10;VA (ATR 42), 160 kt&#10;VA (ATR 72), 175 kt" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
+                        <div class="flex justify-between items-center gap-3">
+                            <input type="text" id="custom-deck-title" placeholder="Deck Title (e.g. My Custom V-Speeds)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 flex-1">
+                            <button onclick="importPastedData()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Save & Play
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Saved Decks -->
+                <div id="custom-decks-container" class="hidden">
+                    <hr class="border-slate-700 my-4">
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Your Saved Custom Decks</h4>
+                    <div id="custom-decks-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Custom saved decks here -->
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="px-6 py-3 bg-slate-900/50 border-t border-slate-700/80 flex justify-end">
+                <button onclick="closeDeckModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Victory Screen -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-center space-y-6">
+            
+            <div class="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto border border-amber-500/40">
+                <i data-lucide="award" class="w-10 h-10"></i>
+            </div>
+
+            <div>
+                <h3 class="text-2xl font-bold text-white mb-1">Session Completed!</h3>
+                <p id="deck-completed-title" class="text-sm text-slate-400">ATR Airspeeds & Operational Speeds</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 bg-slate-900/70 p-4 rounded-xl border border-slate-700/60">
+                <div>
+                    <div class="text-xs text-slate-400 uppercase font-medium">Final Score</div>
+                    <div id="final-score" class="text-xl font-black text-amber-400 mt-1">0</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 uppercase font-medium">Accuracy</div>
+                    <div id="final-accuracy" class="text-xl font-black text-emerald-400 mt-1">100%</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 uppercase font-medium">Total Time</div>
+                    <div id="final-time" class="text-xl font-black text-blue-400 mt-1">00:00</div>
+                </div>
+            </div>
+
+            <div id="review-section" class="text-left space-y-2 max-h-36 overflow-y-auto hidden pr-1">
+                <span class="text-xs font-semibold text-rose-400 uppercase tracking-wider">Review Mistakes:</span>
+                <div id="review-list" class="space-y-1 text-xs text-slate-300">
+                    <!-- Mistakes listed here -->
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button onclick="restartGame()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Play Again
+                </button>
+                <button onclick="openDeckModal(); hideVictoryModal();" class="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-xl transition-colors">
+                    Change Deck
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* Prevent accidental iOS double-tap zoom */
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        /* --------------------------------------------------
+         * PRESET DECKS (Built directly from ATR Data Tables)
+         * -------------------------------------------------- */
+        const PRESET_DECKS = [
+            {
+                id: 'atr-table-151',
+                title: 'Table 1.5.1: Airspeeds (IAS/CAS/GS)',
+                description: 'VMO, MMO, VA, VFE, VLE, VLO, VRA, VWO & VMCL limits',
+                pairs: [
+                    { prompt: "VMO (Max. Operating Speed)", answer: "250 kt (Both)" },
+                    { prompt: "MMO (Max. Operating Mach)", answer: "0.55 (Both)" },
+                    { prompt: "VA (Maneuvering Speed) [ATR 42]", answer: "160 kt" },
+                    { prompt: "VA (Maneuvering Speed) [ATR 72]", answer: "175 kt" },
+                    { prompt: "VFE / VFO Flaps 15 [ATR 42 / 72]", answer: "180 kt / 185 kt" },
+                    { prompt: "VFE / VFO Flaps 25 [ATR 42]", answer: "160 kt" },
+                    { prompt: "VFE / VFO Flaps 30 [ATR 72]", answer: "150 kt" },
+                    { prompt: "VFE / VFO Flaps 35 [ATR 42]", answer: "150 kt" },
+                    { prompt: "VLE (Landing Gear Extended) [ATR 42 / 72]", answer: "180 kt / 185 kt" },
+                    { prompt: "VLO RET (Landing Gear Retraction)", answer: "160 kt (Both)" },
+                    { prompt: "VLO EXT (Landing Gear Extension)", answer: "170 kt (Both)" },
+                    { prompt: "VRA (Max Rough Air Speed)", answer: "180 kt (Both)" },
+                    { prompt: "VWO (Max Wipers Operating Speed)", answer: "160 kt (Both)" },
+                    { prompt: "VMCL Flaps 15 (CAS) [ATR 42 / 72]", answer: "98.5 kt / 98 kt" },
+                    { prompt: "VMCL Flaps 25 (CAS) [ATR 42]", answer: "96 kt" },
+                    { prompt: "VMCL Flaps 30 (CAS) [ATR 72]", answer: "98 kt" },
+                    { prompt: "VMCL Flaps 35 (CAS) [ATR 42]", answer: "96.5 kt" },
+                    { prompt: "Max Tyre Speed (Ground Speed)", answer: "165 kt (Both)" }
+                ]
+            },
+            {
+                id: 'atr-table-1551',
+                title: 'Table 1.5.5.1: Maneuver Speeds VmHB/VmLB Limits',
+                description: 'VmHB high bank & VmLB limits across flap configurations',
+                pairs: [
+                    { prompt: "VmHB All Flaps (0,15,25,30,35)", answer: "1.23 VSR (>= VMCL on approach)" },
+                    { prompt: "VmLB Flaps 0 [ATR 42]", answer: "1.22 VSR" },
+                    { prompt: "VmLB Flaps 0 [ATR 72]", answer: "1.18 VSR" },
+                    { prompt: "VmLB Flaps 15 [Both Aircraft]", answer: "V2" },
+                    { prompt: "VmLB Flaps 25 [ATR 42]", answer: "Not used" },
+                    { prompt: "VmLB Flaps 30 [ATR 72]", answer: "Not used" },
+                    { prompt: "VmLB Flaps 35 [ATR 42]", answer: "Not used" }
+                ]
+            },
+            {
+                id: 'atr-table-1552',
+                title: 'Table 1.5.5.2: Minimum Maneuver Speeds Ratio',
+                description: 'VSR Ratios for VmHB and VmLB across flight phases',
+                pairs: [
+                    { prompt: "VmHB Flaps 0 [ATR 42 / 72]", answer: "1.5 VSR / 1.46 VSR" },
+                    { prompt: "VmLB Flaps 0 [ATR 42 / 72]", answer: "1.45 VSR / 1.40 VSR" },
+                    { prompt: "VmHB Flaps 15 [ATR 42 / 72]", answer: "1.41 VSR / 1.35 VSR" },
+                    { prompt: "VmLB Flaps 15 (T/O 2nd Segment) [42 / 72]", answer: "1.21 VSR / 1.22 VSR" },
+                    { prompt: "VmLB Flaps 15 (Final Takeoff) [Both]", answer: "1.27 VSR" },
+                    { prompt: "VmLB Flaps 15 (En-route) [ATR 42 / 72]", answer: "1.35 VSR / 1.30 VSR" },
+                    { prompt: "VmLB Flaps 15 (Go-Around) [ATR 72]", answer: "1.24 VSR" },
+                    { prompt: "VmHB Flaps 25 (Approach / Final) [ATR 42]", answer: "1.36 VSR" },
+                    { prompt: "VmLB Flaps 25 (Go-Around) [ATR 42]", answer: "1.29 VSR" },
+                    { prompt: "VmHB Flaps 30 [ATR 72]", answer: "1.32 VSR" },
+                    { prompt: "VmHB Flaps 35 [ATR 42]", answer: "1.35 VSR" }
+                ]
+            },
+            {
+                id: 'atr-table-1553',
+                title: 'Table 1.5.5.3: Min Maneuver Speeds (Kts)',
+                description: 'High bank operational maneuver speeds across configurations',
+                pairs: [
+                    { prompt: "Flaps 0 [ATR 42 / ATR 72]", answer: "175 kt / 180 kt" },
+                    { prompt: "Flaps 15 [ATR 42 / ATR 72]", answer: "145 kt / 150 kt" },
+                    { prompt: "Flaps 25 [ATR 42]", answer: "135 kt" },
+                    { prompt: "Flaps 30 [ATR 72]", answer: "135 kt" },
+                    { prompt: "Flaps 35 [ATR 42]", answer: "125 kt" }
+                ]
+            }
+        ];
+
+        /* --------------------------------------------------
+         * GAME STATE VARIABLES
+         * -------------------------------------------------- */
+        let currentDeck = null;
+        let allPairs = [];
+        let batchedPairs = [];
+        let currentBatchIndex = 0;
+        const BATCH_SIZE = 6; 
+
+        let selectedLeft = null; 
+        let selectedRight = null; 
+
+        let matchedPairs = new Map(); 
+        let matchedLeftIds = new Set();
+        let matchedRightIds = new Set();
+        let totalAttempts = 0;
+        let correctMatchesCount = 0;
+        let mistakes = [];
+
+        let score = 0;
+        let streak = 0;
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let soundEnabled = true;
+
+        /* --------------------------------------------------
+         * AUDIO SYNTHESIZER (Web Audio API)
+         * -------------------------------------------------- */
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+
+                if (type === 'select') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'match') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'error') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(180, now + 0.08);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'victory') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.frequency.setValueAtTime(freq, now + (idx * 0.1));
+                        gain.gain.setValueAtTime(0.12, now + (idx * 0.1));
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.1) + 0.3);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + (idx * 0.1));
+                        osc.stop(now + (idx * 0.1) + 0.3);
+                    });
+                }
+            } catch (e) {
+                console.warn('Audio play error', e);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-icon');
+            if (btn) {
+                btn.setAttribute('data-lucide', soundEnabled ? 'volume-2' : 'volume-x');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        /* --------------------------------------------------
+         * CORE GAME ENGINE
+         * -------------------------------------------------- */
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+            loadCustomDecksFromStorage();
+            renderPresetDecksUI();
+            
+            loadDeck(PRESET_DECKS[0]);
+
+            window.addEventListener('resize', updateSvgLines);
+        });
+
+        function loadDeck(deck) {
+            currentDeck = deck;
+            allPairs = [...deck.pairs];
+            
+            score = 0;
+            streak = 0;
+            totalAttempts = 0;
+            correctMatchesCount = 0;
+            mistakes = [];
+            currentBatchIndex = 0;
+
+            updateScoreboard();
+            startTimer();
+
+            createBatches();
+            loadBatch(0);
+
+            closeDeckModal();
+            hideVictoryModal();
+        }
+
+        function createBatches() {
+            const shuffled = [...allPairs].sort(() => Math.random() - 0.5);
+            batchedPairs = [];
+            for (let i = 0; i < shuffled.length; i += BATCH_SIZE) {
+                batchedPairs.push(shuffled.slice(i, i + BATCH_SIZE));
+            }
+        }
+
+        function loadBatch(index) {
+            currentBatchIndex = index;
+            matchedPairs.clear();
+            matchedLeftIds.clear();
+            matchedRightIds.clear();
+            selectedLeft = null;
+            selectedRight = null;
+            clearSvgLines();
+
+            const currentBatch = batchedPairs[currentBatchIndex] || [];
+
+            const leftItems = currentBatch.map((pair, idx) => ({
+                id: `l-${idx}`,
+                prompt: pair.prompt,
+                answer: pair.answer
+            })).sort(() => Math.random() - 0.5);
+
+            const rightItems = currentBatch.map((pair, idx) => ({
+                id: `r-${idx}`,
+                answer: pair.answer
+            })).sort(() => Math.random() - 0.5);
+
+            renderBoard(leftItems, rightItems);
+            updateBatchDisplay();
+        }
+
+        function renderBoard(leftItems, rightItems) {
+            const leftCol = document.getElementById('left-column');
+            const rightCol = document.getElementById('right-column');
+
+            if (!leftCol || !rightCol) return;
+
+            leftCol.innerHTML = '';
+            rightCol.innerHTML = '';
+
+            leftItems.forEach(item => {
+                const div = document.createElement('div');
+                div.id = `left-${item.id}`;
+                div.className = `card-item bg-slate-800 border-2 border-slate-700/80 hover:border-blue-500/50 rounded-xl p-4 cursor-pointer text-sm font-medium text-slate-200 shadow-md flex items-center justify-between gap-3`;
+                div.onclick = () => selectLeft(item);
+                div.innerHTML = `
+                    <span class="leading-snug">${escapeHtml(item.prompt)}</span>
+                    <div class="card-dot w-3.5 h-3.5 rounded-full border-2 border-slate-500/60 transition-all flex-shrink-0"></div>
+                `;
+                leftCol.appendChild(div);
+            });
+
+            rightItems.forEach(item => {
+                const div = document.createElement('div');
+                div.id = `right-${item.id}`;
+                div.className = `card-item bg-slate-800 border-2 border-slate-700/80 hover:border-blue-500/50 rounded-xl p-4 cursor-pointer text-sm font-medium text-slate-200 shadow-md flex items-center justify-between gap-3`;
+                div.onclick = () => selectRight(item);
+                div.innerHTML = `
+                    <div class="card-dot w-3.5 h-3.5 rounded-full border-2 border-slate-500/60 transition-all flex-shrink-0"></div>
+                    <span class="leading-snug text-right font-mono text-blue-300">${escapeHtml(item.answer)}</span>
+                `;
+                rightCol.appendChild(div);
+            });
+
+            updateProgressText();
+        }
+
+        function updateCardStyles() {
+            const leftCards = document.querySelectorAll('#left-column .card-item');
+            leftCards.forEach(card => {
+                if (!card) return;
+                const id = card.id.replace('left-', '');
+                
+                card.classList.remove('card-selected', 'card-matched');
+                if (matchedLeftIds.has(id)) {
+                    card.classList.add('card-matched');
+                } else if (selectedLeft && selectedLeft.id === id) {
+                    card.classList.add('card-selected');
+                }
+            });
+
+            const rightCards = document.querySelectorAll('#right-column .card-item');
+            rightCards.forEach(card => {
+                if (!card) return;
+                const id = card.id.replace('right-', '');
+
+                card.classList.remove('card-selected', 'card-matched');
+                if (matchedRightIds.has(id)) {
+                    card.classList.add('card-matched');
+                } else if (selectedRight && selectedRight.id === id) {
+                    card.classList.add('card-selected');
+                }
+            });
+        }
+
+        function selectLeft(item) {
+            if (!item || matchedLeftIds.has(item.id)) return;
+            initAudio();
+
+            if (selectedLeft && selectedLeft.id === item.id) {
+                selectedLeft = null;
+            } else {
+                selectedLeft = item;
+                playSound('select');
+            }
+
+            updateCardStyles();
+            checkMatch();
+            updateSvgLines();
+        }
+
+        function selectRight(item) {
+            if (!item || matchedRightIds.has(item.id)) return;
+            initAudio();
+
+            if (selectedRight && selectedRight.id === item.id) {
+                selectedRight = null;
+            } else {
+                selectedRight = item;
+                playSound('select');
+            }
+
+            updateCardStyles();
+            checkMatch();
+            updateSvgLines();
+        }
+
+        function checkMatch() {
+            if (!selectedLeft || !selectedRight) return;
+
+            totalAttempts++;
+            const leftEl = document.getElementById(`left-${selectedLeft.id}`);
+            const rightEl = document.getElementById(`right-${selectedRight.id}`);
+
+            if (selectedLeft.answer === selectedRight.answer) {
+                matchedPairs.set(selectedLeft.id, selectedRight.id);
+                matchedLeftIds.add(selectedLeft.id);
+                matchedRightIds.add(selectedRight.id);
+
+                correctMatchesCount++;
+                streak++;
+
+                playSound('match');
+
+                if (leftEl) leftEl.classList.add('animate-pulse-success');
+                if (rightEl) rightEl.classList.add('animate-pulse-success');
+
+                const basePoints = 100;
+                const streakBonus = Math.min(streak * 20, 200);
+                const gainedPoints = basePoints + streakBonus;
+                score += gainedPoints;
+
+                if (streak >= 3) {
+                    showComboBanner(`${streak}x STREAK! +${gainedPoints}`);
+                }
+
+                selectedLeft = null;
+                selectedRight = null;
+
+                updateCardStyles();
+                updateScoreboard();
+                updateProgressText();
+
+                const currentBatch = batchedPairs[currentBatchIndex] || [];
+                if (matchedPairs.size === currentBatch.length) {
+                    setTimeout(() => {
+                        if (currentBatchIndex + 1 < batchedPairs.length) {
+                            loadBatch(currentBatchIndex + 1);
+                        } else {
+                            endGame();
+                        }
+                    }, 500);
+                }
+
+            } else {
+                streak = 0;
+                playSound('error');
+
+                mistakes.push({
+                    prompt: selectedLeft.prompt,
+                    correctAnswer: selectedLeft.answer,
+                    userAnswer: selectedRight.answer
+                });
+
+                if (leftEl) leftEl.classList.add('card-error');
+                if (rightEl) rightEl.classList.add('card-error');
+
+                const tempLeft = leftEl;
+                const tempRight = rightEl;
+
+                setTimeout(() => {
+                    if (tempLeft) tempLeft.classList.remove('card-error');
+                    if (tempRight) tempRight.classList.remove('card-error');
+                    updateCardStyles();
+                }, 400);
+
+                selectedLeft = null;
+                selectedRight = null;
+
+                updateCardStyles();
+                updateScoreboard();
+            }
+
+            setTimeout(updateSvgLines, 30);
+        }
+
+        /* --------------------------------------------------
+         * SVG CONNECTION LINES DRAWING
+         * -------------------------------------------------- */
+        function getDotCenter(cardEl) {
+            if (!cardEl) return { x: 0, y: 0 };
+            const dot = cardEl.querySelector('.card-dot');
+            if (dot) {
+                const r = dot.getBoundingClientRect();
+                return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+            }
+            const r = cardEl.getBoundingClientRect();
+            const isLeft = cardEl.id.startsWith('left-');
+            return { x: isLeft ? r.right - 12 : r.left + 12, y: r.top + r.height / 2 };
+        }
+
+        function updateSvgLines() {
+            const svg = document.getElementById('connection-svg');
+            if (!svg) return;
+
+            clearSvgLines();
+
+            if (selectedLeft && selectedRight) {
+                const leftEl = document.getElementById(`left-${selectedLeft.id}`);
+                const rightEl = document.getElementById(`right-${selectedRight.id}`);
+                if (leftEl && rightEl) {
+                    drawLine(svg, leftEl, rightEl, '#3b82f6', 3, true, 'glow-active');
+                }
+            }
+
+            matchedPairs.forEach((rightId, leftId) => {
+                const leftEl = document.getElementById(`left-${leftId}`);
+                const rightEl = document.getElementById(`right-${rightId}`);
+                if (leftEl && rightEl) {
+                    drawLine(svg, leftEl, rightEl, '#22c55e', 2.5, false, 'glow-success');
+                }
+            });
+        }
+
+        function drawLine(svg, el1, el2, strokeColor, strokeWidth, isDashed, filterId) {
+            if (!svg || !el1 || !el2) return;
+
+            const svgRect = svg.getBoundingClientRect();
+            const p1 = getDotCenter(el1);
+            const p2 = getDotCenter(el2);
+
+            const x1 = p1.x - svgRect.left;
+            const y1 = p1.y - svgRect.top;
+            const x2 = p2.x - svgRect.left;
+            const y2 = p2.y - svgRect.top;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const dx = Math.abs(x2 - x1);
+            const curve = Math.max(dx * 0.4, 30);
+            const d = `M ${x1} ${y1} C ${x1 + curve} ${y1}, ${x2 - curve} ${y2}, ${x2} ${y2}`;
+
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', strokeColor);
+            path.setAttribute('stroke-width', strokeWidth);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke-linecap', 'round');
+            if (filterId) path.setAttribute('filter', `url(#${filterId})`);
+            if (isDashed) path.setAttribute('stroke-dasharray', '6 4');
+
+            svg.appendChild(path);
+        }
+
+        function clearSvgLines() {
+            const svg = document.getElementById('connection-svg');
+            if (!svg) return;
+            const paths = svg.querySelectorAll('path');
+            paths.forEach(p => p.remove());
+        }
+
+        /* --------------------------------------------------
+         * TIMERS & SCOREBOARD UPDATES
+         * -------------------------------------------------- */
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerSeconds = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const secs = (timerSeconds % 60).toString().padStart(2, '0');
+            const timeStr = `${mins}:${secs}`;
+            
+            const timerEl = document.getElementById('timer-display');
+            const mobileTimerEl = document.getElementById('mobile-timer');
+            if (timerEl) timerEl.innerText = timeStr;
+            if (mobileTimerEl) mobileTimerEl.innerText = timeStr;
+        }
+
+        function updateScoreboard() {
+            const scoreEl = document.getElementById('score-display');
+            const mobileScoreEl = document.getElementById('mobile-score');
+            const streakEl = document.getElementById('streak-display');
+            const mobileStreakEl = document.getElementById('mobile-streak');
+
+            if (scoreEl) scoreEl.innerText = score;
+            if (mobileScoreEl) mobileScoreEl.innerText = score;
+            if (streakEl) streakEl.innerText = `${streak}x`;
+            if (mobileStreakEl) mobileStreakEl.innerText = `${streak}x`;
+        }
+
+        function updateProgressText() {
+            const currentBatch = batchedPairs[currentBatchIndex] || [];
+            const totalInBatch = currentBatch.length;
+            const count = matchedPairs.size;
+
+            const leftProg = document.getElementById('left-progress');
+            const rightProg = document.getElementById('right-progress');
+            if (leftProg) leftProg.innerText = `${count}/${totalInBatch} matched`;
+            if (rightProg) rightProg.innerText = `${count}/${totalInBatch} matched`;
+        }
+
+        function updateBatchDisplay() {
+            const text = `${currentBatchIndex + 1}/${batchedPairs.length || 1}`;
+            const batchEl = document.getElementById('batch-display');
+            const mobileBatchEl = document.getElementById('mobile-batch');
+            if (batchEl) batchEl.innerText = text;
+            if (mobileBatchEl) mobileBatchEl.innerText = text;
+        }
+
+        function showComboBanner(text) {
+            const banner = document.getElementById('combo-banner');
+            const comboText = document.getElementById('combo-text');
+            if (!banner || !comboText) return;
+
+            comboText.innerText = text;
+            banner.classList.remove('opacity-0', '-translate-y-4');
+            banner.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                banner.classList.remove('opacity-100', 'translate-y-0');
+                banner.classList.add('opacity-0', '-translate-y-4');
+            }, 1200);
+        }
+
+        /* --------------------------------------------------
+         * VICTORY / END GAME
+         * -------------------------------------------------- */
+        function endGame() {
+            clearInterval(timerInterval);
+            playSound('victory');
+
+            const accuracy = totalAttempts > 0 ? Math.round((correctMatchesCount / totalAttempts) * 100) : 100;
+            
+            const deckTitleEl = document.getElementById('deck-completed-title');
+            const finalScoreEl = document.getElementById('final-score');
+            const finalAccEl = document.getElementById('final-accuracy');
+            const finalTimeEl = document.getElementById('final-time');
+            const timerDisplay = document.getElementById('timer-display');
+
+            if (deckTitleEl && currentDeck) deckTitleEl.innerText = currentDeck.title;
+            if (finalScoreEl) finalScoreEl.innerText = score;
+            if (finalAccEl) finalAccEl.innerText = `${accuracy}%`;
+            if (finalTimeEl && timerDisplay) finalTimeEl.innerText = timerDisplay.innerText;
+
+            const reviewSection = document.getElementById('review-section');
+            const reviewList = document.getElementById('review-list');
+            
+            if (reviewList) {
+                reviewList.innerHTML = '';
+                if (mistakes.length > 0) {
+                    if (reviewSection) reviewSection.classList.remove('hidden');
+                    const uniqueMistakes = Array.from(new Set(mistakes.map(m => m.prompt)))
+                        .map(prompt => mistakes.find(m => m.prompt === prompt));
+
+                    uniqueMistakes.forEach(m => {
+                        const item = document.createElement('div');
+                        item.className = "bg-slate-900/90 p-2 rounded border border-rose-500/30";
+                        item.innerHTML = `<span class="text-slate-200 font-semibold">${escapeHtml(m.prompt)}</span>: <span class="text-emerald-400 font-mono">${escapeHtml(m.correctAnswer)}</span>`;
+                        reviewList.appendChild(item);
+                    });
+                } else if (reviewSection) {
+                    reviewSection.classList.add('hidden');
+                }
+            }
+
+            const vicModal = document.getElementById('victory-modal');
+            if (vicModal) vicModal.classList.remove('hidden');
+        }
+
+        function restartGame() {
+            if (currentDeck) loadDeck(currentDeck);
+        }
+
+        function hideVictoryModal() {
+            const vicModal = document.getElementById('victory-modal');
+            if (vicModal) vicModal.classList.add('hidden');
+        }
+
+        /* --------------------------------------------------
+         * CSV IMPORT & DECK MANAGEMENT
+         * -------------------------------------------------- */
+        function openDeckModal() {
+            const modal = document.getElementById('deck-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeDeckModal() {
+            const modal = document.getElementById('deck-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function renderPresetDecksUI() {
+            const grid = document.getElementById('preset-decks-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            PRESET_DECKS.forEach(deck => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900/80 border border-slate-700/80 hover:border-blue-500 p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between group";
+                card.onclick = () => loadDeck(deck);
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <h5 class="font-bold text-sm text-slate-100 group-hover:text-blue-400 transition-colors">${escapeHtml(deck.title)}</h5>
+                            <span class="text-[10px] bg-blue-500/20 text-blue-300 font-mono px-2 py-0.5 rounded-full">${deck.pairs.length} pairs</span>
+                        </div>
+                        <p class="text-xs text-slate-400">${escapeHtml(deck.description)}</p>
+                    </div>
+                    <div class="mt-3 flex items-center gap-1 text-xs text-blue-400 font-medium">
+                        <span>Play Deck</span> <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const fileName = file.name.replace(/\.[^/.]+$/, "");
+                parseAndSaveCSV(content, fileName);
+            };
+            reader.readAsText(file);
+        }
+
+        function importPastedData() {
+            const pasteInput = document.getElementById('paste-input');
+            const titleInput = document.getElementById('custom-deck-title');
+            
+            const text = pasteInput ? pasteInput.value.trim() : '';
+            const title = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : "Custom Study Deck";
+            
+            if (!text) {
+                return;
+            }
+            parseAndSaveCSV(text, title);
+            if (pasteInput) pasteInput.value = '';
+            if (titleInput) titleInput.value = '';
+        }
+
+        function parseAndSaveCSV(text, title) {
+            const lines = text.split(/\r?\n/);
+            const pairs = [];
+
+            lines.forEach(line => {
+                if (!line.trim()) return;
+                let parts = line.split('\t');
+                if (parts.length < 2) {
+                    parts = line.split(',');
+                }
+
+                if (parts.length >= 2) {
+                    const prompt = parts[0].trim().replace(/^["']|["']$/g, '');
+                    const answer = parts.slice(1).join(',').trim().replace(/^["']|["']$/g, '');
+                    if (prompt && answer) {
+                        pairs.push({ prompt, answer });
+                    }
+                }
+            });
+
+            if (pairs.length === 0) return;
+
+            const newDeck = {
+                id: 'custom-' + Date.now(),
+                title: title,
+                description: `Custom imported deck with ${pairs.length} items.`,
+                pairs: pairs
+            };
+
+            saveCustomDeckToStorage(newDeck);
+            loadCustomDecksFromStorage();
+            loadDeck(newDeck);
+        }
+
+        function saveCustomDeckToStorage(deck) {
+            try {
+                const saved = JSON.parse(localStorage.getItem('aviation_matching_custom_decks') || '[]');
+                saved.push(deck);
+                localStorage.setItem('aviation_matching_custom_decks', JSON.stringify(saved));
+            } catch (e) {
+                console.warn('Storage write error', e);
+            }
+        }
+
+        function loadCustomDecksFromStorage() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('aviation_matching_custom_decks') || '[]');
+                const container = document.getElementById('custom-decks-container');
+                const grid = document.getElementById('custom-decks-grid');
+
+                if (!container || !grid) return;
+
+                if (saved.length === 0) {
+                    container.classList.add('hidden');
+                    return;
+                }
+
+                container.classList.remove('hidden');
+                grid.innerHTML = '';
+
+                saved.forEach(deck => {
+                    const card = document.createElement('div');
+                    card.className = "bg-slate-900/80 border border-slate-700/80 hover:border-emerald-500 p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between group relative";
+                    card.onclick = () => loadDeck(deck);
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <h5 class="font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition-colors">${escapeHtml(deck.title)}</h5>
+                                <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded-full">${deck.pairs.length} pairs</span>
+                            </div>
+                            <p class="text-xs text-slate-400">${escapeHtml(deck.description)}</p>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between">
+                            <span class="text-xs text-emerald-400 font-medium flex items-center gap-1">Play Deck <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
+                            <button onclick="deleteCustomDeck('${deck.id}', event)" class="text-slate-500 hover:text-rose-400 p-1" title="Delete Deck">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+                if (window.lucide) lucide.createIcons();
+            } catch (e) {
+                console.warn('Storage read error', e);
+            }
+        }
+
+        function deleteCustomDeck(id, event) {
+            if (event) event.stopPropagation();
+            try {
+                let saved = JSON.parse(localStorage.getItem('aviation_matching_custom_decks') || '[]');
+                saved = saved.filter(d => d.id !== id);
+                localStorage.setItem('aviation_matching_custom_decks', JSON.stringify(saved));
+                loadCustomDecksFromStorage();
+            } catch (e) {
+                console.warn('Storage delete error', e);
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
