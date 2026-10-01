@@ -9,7 +9,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
         body {
             font-family: 'Inter', sans-serif;
@@ -145,13 +145,13 @@
     <main class="max-w-7xl w-full mx-auto px-4 py-6 flex-1 flex flex-col justify-center relative">
         
         <!-- VIEW 1: LANDING PAGE (GAME MODE SELECTION) -->
-        <section id="landing-view" class="max-w-4xl mx-auto w-full my-auto space-y-8">
+        <section id="landing-view" class="max-w-5xl mx-auto w-full my-auto space-y-8">
             <div class="text-center space-y-3">
-                <h2 class="text-3xl font-extrabold text-white">Select Game Mode</h2>
-                <p class="text-slate-400 text-sm max-w-lg mx-auto">Choose your training methodology to start practicing procedure speeds, limitations, and operational checklists.</p>
+                <h2 class="text-3xl font-extrabold text-white">Select Training Mode</h2>
+                <p class="text-slate-400 text-sm max-w-xl mx-auto">Master SOP flight deck procedures, callout synchronization, and task sharing.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Mode Option 1: Multi-Column Matcher -->
                 <div onclick="selectGameMode('matching')" class="bg-slate-800/90 border-2 border-slate-700 hover:border-blue-500 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-xl flex flex-col justify-between group">
                     <div class="space-y-4">
@@ -159,8 +159,8 @@
                             <i data-lucide="columns" class="w-6 h-6"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">Multi-Column Matching</h3>
-                            <p class="text-sm text-slate-400 leading-relaxed">Connect matching elements across multiple columns simultaneously. Standard 2-column or advanced 3-column operational limits matching.</p>
+                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">Multi-Column Matcher</h3>
+                            <p class="text-sm text-slate-400 leading-relaxed">Connect items across columns. Features in-sequence or scrambled question toggle for structured memorization.</p>
                         </div>
                     </div>
                     <div class="mt-6 flex items-center gap-2 text-sm text-blue-400 font-semibold">
@@ -176,11 +176,28 @@
                             <i data-lucide="list-ordered" class="w-6 h-6"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">Action Tile Sequence Practice</h3>
-                            <p class="text-sm text-slate-400 leading-relaxed">Target items are listed on the left. Practice tiles can be scrambled or in sequence—place them into correct order to match the items.</p>
+                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">Action Tile Sequence</h3>
+                            <p class="text-sm text-slate-400 leading-relaxed">Match procedural action tiles to step targets. Switch between scrambled and sequential order at any time.</p>
                         </div>
                     </div>
                     <div class="mt-6 flex items-center gap-2 text-sm text-emerald-400 font-semibold">
+                        <span>Select Mode</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <!-- Mode Option 3: Operator Trainer (Timeline View) -->
+                <div onclick="selectGameMode('roles')" class="bg-slate-800/90 border-2 border-slate-700 hover:border-purple-500 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-xl flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 bg-purple-600/20 text-purple-400 rounded-xl flex items-center justify-center border border-purple-500/30 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                            <i data-lucide="git-commit" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">Operator Trainer</h3>
+                            <p class="text-sm text-slate-400 leading-relaxed">Timeline-based procedural workflow trainer with distinct visual indicators for spoken callouts and switch actions.</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex items-center gap-2 text-sm text-purple-400 font-semibold">
                         <span>Select Mode</span>
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </div>
@@ -236,24 +253,20 @@
 
             <div class="p-6 overflow-y-auto space-y-6">
                 
-                <!-- Saved Decks for current account -->
+                <!-- Saved Decks -->
                 <div>
-                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Your Account Loaded Decks</h4>
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Available &amp; Saved Decks</h4>
                     <div id="custom-decks-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <!-- Populated dynamically from storage -->
-                    </div>
-                    <div id="no-decks-notice" class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-6 text-center text-slate-400 text-sm">
-                        <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
-                        No pre-loaded decks available. Import or paste a study deck below to start.
+                        <!-- Populated dynamically -->
                     </div>
                 </div>
 
                 <hr class="border-slate-700">
 
-                <!-- Import / Upload Section -->
+                <!-- Import / Create Section -->
                 <div>
                     <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Import Custom CSV or Text Deck</h4>
-                    <p class="text-xs text-slate-400 mb-3">Supports 2-column (<code class="text-blue-300">Question, Answer</code>) or multi-column (<code class="text-blue-300">Item, Action 1, Action 2</code>) comma or tab separated data.</p>
+                    <p class="text-xs text-slate-400 mb-3">Supports comma or tab separated CSV formats (<code class="text-blue-300">Event, PF Action, PM Action</code>).</p>
                     
                     <div id="drop-zone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-600 hover:border-blue-500 bg-slate-800/50 hover:bg-blue-500/5 p-5 rounded-xl text-center cursor-pointer transition-all mb-4 group">
                         <i data-lucide="upload-cloud" class="w-7 h-7 text-slate-400 group-hover:text-blue-400 mx-auto mb-1 transition-colors"></i>
@@ -262,12 +275,12 @@
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-xs text-slate-400 font-medium">Or Paste Raw Data:</label>
-                        <textarea id="paste-input" rows="4" placeholder="Step 1a, Identify - Failure identification and confirmation&#10;Step 1b, Any OEB? - Follow applicable OEB procedure&#10;Step 1e, Cross check - Verify target parameters&#10;Step 3, Memory items (if applicable)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
+                        <label class="text-xs text-slate-400 font-medium">Or Paste Raw CSV Data:</label>
+                        <textarea id="paste-input" rows="4" placeholder="Step 1a - Master Caution, CALLS: &quot;CHECK&quot;, CALLS: &quot;MASTER CAUTION AIR PACK ON EWD&quot; &amp; Cancels Master Caution&#10;Step 1b - Failure Identification, CALLS: &quot;IDENTIFY&quot;, Checks SD Page / OVHD Panel &amp; CALLS: &quot;PACK 1 FAULT&quot;" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
                         <div class="flex justify-between items-center gap-3">
-                            <input type="text" id="custom-deck-title" placeholder="Deck Title (e.g. Failure Handling Sequence)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 flex-1">
+                            <input type="text" id="custom-deck-title" placeholder="Deck Title (e.g., Abnormal Handling Air Pack Fault)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 flex-1">
                             <button onclick="importPastedData()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
-                                <i data-lucide="plus" class="w-4 h-4"></i> Save & Play
+                                <i data-lucide="plus" class="w-4 h-4"></i> Save &amp; Play
                             </button>
                         </div>
                     </div>
@@ -276,13 +289,35 @@
             </div>
 
             <div class="px-6 py-3 bg-slate-900/50 border-t border-slate-700/80 flex justify-between items-center">
-                <button onclick="showLandingPage()" class="text-xs text-slate-400 hover:text-slate-200">← Back to Game Mode Selection</button>
+                <button onclick="showLandingPage()" class="text-xs text-slate-400 hover:text-slate-200">← Back to Training Modes</button>
                 <button onclick="closeDeckModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded-lg">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL 2: VICTORY SCREEN -->
+    <!-- MODAL 2: EDIT DECK NAME MODAL -->
+    <div id="edit-deck-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="edit" class="w-5 h-5 text-amber-400"></i> Edit Deck Title
+                </h3>
+                <button onclick="closeEditDeckModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs text-slate-400 font-medium">Deck Title:</label>
+                <input type="text" id="edit-deck-title-input" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeEditDeckModal()" class="px-4 py-2 bg-slate-700 text-slate-200 text-sm rounded-lg">Cancel</button>
+                <button onclick="saveDeckName()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm rounded-lg">Save Title</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: VICTORY SCREEN -->
     <div id="victory-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-800 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-center space-y-6">
             
@@ -323,9 +358,33 @@
 
     <script>
         /* --------------------------------------------------
+         * DEFAULT DECKS
+         * -------------------------------------------------- */
+        const DEFAULT_DECKS = [
+            {
+                id: 'default-airpack',
+                title: 'Abnormal Handling - Air Pack Fault',
+                description: 'SOP Task Sharing between Pilot Flying (PF) and Pilot Monitoring (PM).',
+                headers: ['Flight Event', 'PF Action', 'PM Action'],
+                rows: [
+                    ['Step 1a - Master Caution', 'CALLS: "CHECK"', 'CALLS: "MASTER CAUTION AIR PACK ON EWD" & Cancels Master Caution'],
+                    ['Step 1b - Failure Identification', 'CALLS: "IDENTIFY"', 'Checks SD Page / OVHD Panel & CALLS: "PACK 1 FAULT"'],
+                    ['Step 1c - Failure Confirmation', 'CALLS: "CONFIRMED"', 'Verifies system failure parameter'],
+                    ['Step 1d - OEB Check', 'CALLS: "ANY OEB?"', 'Confirms no OEB as per Pre-Flight briefing & CALLS: "NO OEB"'],
+                    ['Step 2a - System Reset Initiation', 'CALLS: "RESET PACK 1"', 'Places finger on Pack 1 Pb (OVHD Panel) & CALLS: "PACK 1 CONFIRM?"'],
+                    ['Step 2b - System Reset Off', 'Confirms correct Pb & CALLS: "CONFIRM"', 'Presses Pack 1 Pb & CALLS: "PACK 1 OFF"'],
+                    ['Step 2c - System Reset On', 'Confirms correct Pb & CALLS: "CONFIRM"', 'After 3 seconds CALLS: "PACK 1 ON CONFIRM?" & Presses Pack 1 Pb'],
+                    ['Step 2d - Reset Evaluation', 'Monitors system status', 'CALLS: "RESET UNSUCCESSFUL"'],
+                    ['Step 3a - Transfer Controls', 'CALLS: "I HAVE CONTROLS AND COMMS"', 'CALLS: "YOU HAVE CONTROLS AND COMMS"'],
+                    ['Step 3b - Checklist Execution', 'CALLS: "PACK 1 VALVE FAULT CHECKLIST"', 'CALLS: "PACK 1 VALVE FAULT CHECKLIST" & Begins execution']
+                ]
+            }
+        ];
+
+        /* --------------------------------------------------
          * GAME STATE VARIABLES
          * -------------------------------------------------- */
-        let activeGameMode = null; // 'matching' or 'sequence'
+        let activeGameMode = null; // 'matching', 'sequence', or 'roles'
         let currentDeck = null;
         let numCols = 2;
         let allRows = [];
@@ -333,20 +392,23 @@
         let currentBatchIndex = 0;
         const BATCH_SIZE = 5;
 
-        // Sequence Mode state
-        let sequenceSlots = [];
+        // Ordering State
         let sequenceOrderMode = 'scrambled'; // 'scrambled' or 'sequential'
+        let editingDeckId = null;
 
-        // Matching Mode state
+        // Sequence / Role state
+        let sequenceSlots = [];
+        let selectedRoleTile = null;
+
+        // Matching state
         let currentSelections = {}; 
         let matchedGroups = [];
         let matchedCardIds = new Set();
         let matchedTupleIndices = new Set();
 
-        // Accuracy & Stats Tracking
+        // Accuracy & Stats
         let totalAttempts = 0;
         let correctMatchesCount = 0;
-
         let score = 0;
         let streak = 0;
         let timerSeconds = 0;
@@ -448,14 +510,23 @@
             document.getElementById('header-stats').classList.add('hidden');
             document.getElementById('decks-nav-btn').classList.add('hidden');
             closeDeckModal();
+            closeEditDeckModal();
             hideVictoryModal();
         }
 
         function selectGameMode(mode) {
             activeGameMode = mode;
-            document.getElementById('current-mode-subtitle').innerText = 
-                mode === 'sequence' ? 'Action Tile Sequence Trainer' : 'Multi-Column Matching Game';
+            let title = 'Multi-Column Matching Game';
+            if (mode === 'sequence') title = 'Action Tile Sequence Trainer';
+            if (mode === 'roles') title = 'Operator Procedure & Callout Trainer';
+            
+            document.getElementById('current-mode-subtitle').innerText = title;
             openDeckModal();
+        }
+
+        function setSequenceOrderMode(mode) {
+            sequenceOrderMode = mode;
+            if (currentDeck) loadDeck(currentDeck);
         }
 
         /* --------------------------------------------------
@@ -496,17 +567,14 @@
             let rowCopy = [...allRows];
             batchedRows = [];
 
-            if (activeGameMode === 'matching') {
-                const shuffled = rowCopy.sort(() => Math.random() - 0.5);
-                for (let i = 0; i < shuffled.length; i += BATCH_SIZE) {
-                    batchedRows.push(shuffled.slice(i, i + BATCH_SIZE));
-                }
+            if (sequenceOrderMode === 'scrambled') {
+                rowCopy.sort(() => Math.random() - 0.5);
             } else {
-                // Sort left items naturally (e.g., Step 1a, Step 1b, Step 1e, Step 3, Step 5)
                 rowCopy.sort((a, b) => naturalSortCompare(a[0] || '', b[0] || ''));
-                for (let i = 0; i < rowCopy.length; i += BATCH_SIZE) {
-                    batchedRows.push(rowCopy.slice(i, i + BATCH_SIZE));
-                }
+            }
+
+            for (let i = 0; i < rowCopy.length; i += BATCH_SIZE) {
+                batchedRows.push(rowCopy.slice(i, i + BATCH_SIZE));
             }
         }
 
@@ -516,10 +584,13 @@
             matchedCardIds.clear();
             matchedTupleIndices.clear();
             currentSelections = {};
+            selectedRoleTile = null;
             clearSvgLines();
 
             if (activeGameMode === 'sequence') {
                 renderSequenceBoard();
+            } else if (activeGameMode === 'roles') {
+                renderRolesBoard();
             } else {
                 renderMatchingBoard();
             }
@@ -539,12 +610,16 @@
 
             const boardColumns = [];
             for (let colIdx = 0; colIdx < numCols; colIdx++) {
-                const items = currentBatch.map((rowTuple, tupleIdx) => ({
+                let items = currentBatch.map((rowTuple, tupleIdx) => ({
                     cardId: `card-c${colIdx}-t${tupleIdx}`,
                     tupleId: tupleIdx,
                     colIndex: colIdx,
                     text: rowTuple[colIdx] || ''
-                })).sort(() => Math.random() - 0.5);
+                }));
+
+                if (colIdx > 0 || sequenceOrderMode === 'scrambled') {
+                    items.sort(() => Math.random() - 0.5);
+                }
 
                 boardColumns.push({
                     header: currentDeck.headers ? currentDeck.headers[colIdx] : `Column ${colIdx + 1}`,
@@ -557,13 +632,30 @@
                 colDiv.className = "flex flex-col gap-3";
 
                 const headerDiv = document.createElement('div');
-                headerDiv.className = "flex items-center justify-between px-2 mb-1";
+                headerDiv.className = "flex items-center justify-between px-2 mb-1 gap-2";
+                
+                let headerControls = '';
+                if (colIdx === 0) {
+                    headerControls = `
+                        <div class="flex items-center bg-slate-900/90 border border-slate-700 rounded-lg p-0.5 text-[11px]">
+                            <button onclick="setSequenceOrderMode('scrambled')" class="px-2 py-0.5 rounded font-medium transition-colors ${sequenceOrderMode === 'scrambled' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+                                Scrambled
+                            </button>
+                            <button onclick="setSequenceOrderMode('sequential')" class="px-2 py-0.5 rounded font-medium transition-colors ${sequenceOrderMode === 'sequential' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+                                In-Order
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    headerControls = `<span id="col-${colIdx}-progress" class="text-xs text-slate-500">0 matched</span>`;
+                }
+
                 headerDiv.innerHTML = `
                     <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
                         <i data-lucide="${colIdx === 0 ? 'help-circle' : 'layers'}" class="w-4 h-4 text-blue-400"></i>
                         <span>${escapeHtml(colData.header)}</span>
                     </h2>
-                    <span id="col-${colIdx}-progress" class="text-xs text-slate-500">0 matched</span>
+                    ${headerControls}
                 `;
                 colDiv.appendChild(headerDiv);
 
@@ -701,11 +793,6 @@
         /* --------------------------------------------------
          * GAME MODE 2: ACTION TILE SEQUENCE TRAINER
          * -------------------------------------------------- */
-        function toggleSequenceOrderMode(mode) {
-            sequenceOrderMode = mode;
-            loadBatch(currentBatchIndex);
-        }
-
         function renderSequenceBoard() {
             const currentBatch = batchedRows[currentBatchIndex] || [];
             const container = document.getElementById('board-columns-container');
@@ -714,15 +801,22 @@
             container.className = `grid grid-cols-1 md:grid-cols-2 gap-8 relative z-20 my-auto`;
             container.innerHTML = '';
 
-            // Left Column: Target Items Sequence (Sorted alphanumerically)
             const leftCol = document.createElement('div');
             leftCol.className = "flex flex-col gap-3";
             leftCol.innerHTML = `
                 <div class="px-2 mb-1 flex items-center justify-between">
                     <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
                         <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Target Items Sequence</span>
+                        <span>Target Step Items</span>
                     </h2>
+                    <div class="flex items-center bg-slate-900/90 border border-slate-700 rounded-lg p-0.5 text-[11px]">
+                        <button onclick="setSequenceOrderMode('scrambled')" class="px-2 py-0.5 rounded font-medium transition-colors ${sequenceOrderMode === 'scrambled' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+                            Scrambled
+                        </button>
+                        <button onclick="setSequenceOrderMode('sequential')" class="px-2 py-0.5 rounded font-medium transition-colors ${sequenceOrderMode === 'sequential' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+                            In-Order
+                        </button>
+                    </div>
                 </div>
             `;
 
@@ -752,7 +846,6 @@
             });
             leftCol.appendChild(slotsWrapper);
 
-            // Right Column: Action tiles (Scrambled or In-Order)
             const rightCol = document.createElement('div');
             rightCol.className = "flex flex-col gap-3";
             rightCol.innerHTML = `
@@ -761,15 +854,6 @@
                         <i data-lucide="shuffle" class="w-4 h-4 text-blue-400"></i>
                         <span>Action Practice Tiles</span>
                     </h2>
-                    <!-- Sequential / Scrambled Toggle -->
-                    <div class="flex items-center bg-slate-900/90 border border-slate-700 rounded-lg p-0.5 text-xs">
-                        <button onclick="toggleSequenceOrderMode('scrambled')" class="px-2 py-1 rounded-md font-medium transition-colors ${sequenceOrderMode === 'scrambled' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
-                            Scrambled
-                        </button>
-                        <button onclick="toggleSequenceOrderMode('sequential')" class="px-2 py-1 rounded-md font-medium transition-colors ${sequenceOrderMode === 'sequential' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
-                            In-Order
-                        </button>
-                    </div>
                 </div>
             `;
 
@@ -780,11 +864,7 @@
             let actionTiles = currentBatch.map((row, idx) => ({
                 id: `tile-${idx}`,
                 text: row.slice(1).join(' - ') || row[1] || ''
-            }));
-
-            if (sequenceOrderMode === 'scrambled') {
-                actionTiles = actionTiles.sort(() => Math.random() - 0.5);
-            }
+            })).sort(() => Math.random() - 0.5);
 
             actionTiles.forEach(tile => {
                 const tileEl = document.createElement('div');
@@ -800,7 +880,6 @@
             container.appendChild(leftCol);
             container.appendChild(rightCol);
 
-            // Action verify button
             const actionContainer = document.createElement('div');
             actionContainer.className = "col-span-1 md:col-span-2 flex justify-center mt-4";
             actionContainer.innerHTML = `
@@ -877,6 +956,251 @@
                 correctMatchesCount++;
                 playSound('match');
                 score += 500 + (streak * 50);
+                streak++;
+                updateScoreboard();
+
+                setTimeout(() => {
+                    if (currentBatchIndex + 1 < batchedRows.length) loadBatch(currentBatchIndex + 1);
+                    else endGame();
+                }, 800);
+            } else {
+                playSound('error');
+                streak = 0;
+                updateScoreboard();
+            }
+        }
+
+        /* --------------------------------------------------
+         * GAME MODE 3: OPERATOR TRAINER (TIMELINE VIEW)
+         * -------------------------------------------------- */
+        function formatActionBadge(text) {
+            const isCallout = text.toUpperCase().includes('CALLS:') || text.includes('"');
+            if (isCallout) {
+                return `<div class="bg-amber-950/60 border border-amber-500/50 text-amber-200 px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1.5 shadow-sm">
+                    <span class="text-amber-400 font-bold">🗣️ CALLOUT:</span> <span>${escapeHtml(text)}</span>
+                </div>`;
+            }
+            return `<div class="bg-blue-950/60 border border-blue-500/50 text-blue-200 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 shadow-sm">
+                <span class="text-blue-400 font-bold">👆 ACTION:</span> <span>${escapeHtml(text)}</span>
+            </div>`;
+        }
+
+        function renderRolesBoard() {
+            const currentBatch = batchedRows[currentBatchIndex] || [];
+            const container = document.getElementById('board-columns-container');
+            if (!container) return;
+
+            container.className = `grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-20 my-auto`;
+            container.innerHTML = '';
+
+            // 1. Procedure Timeline Column
+            const leftCol = document.createElement('div');
+            leftCol.className = "lg:col-span-2 flex flex-col gap-3";
+            leftCol.innerHTML = `
+                <div class="px-2 mb-1 flex items-center justify-between">
+                    <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
+                        <i data-lucide="git-commit" class="w-4 h-4 text-purple-400"></i>
+                        <span>Procedure Events Timeline</span>
+                    </h2>
+                </div>
+            `;
+
+            sequenceSlots = currentBatch.map((row, idx) => ({
+                id: `role-slot-${idx}`,
+                eventTitle: row[0],
+                expectedPF: row[1] || '',
+                expectedPM: row[2] || '',
+                placedPF: null,
+                placedPM: null
+            }));
+
+            const slotsWrapper = document.createElement('div');
+            slotsWrapper.className = "flex flex-col gap-4 relative pl-4 border-l-2 border-slate-700/80 ml-2";
+
+            sequenceSlots.forEach((slot, idx) => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-800 border-2 border-slate-700/80 rounded-xl p-4 space-y-3 shadow-md relative";
+                card.innerHTML = `
+                    <div class="absolute -left-[25px] top-4 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900 shadow-md"></div>
+                    <div class="flex items-center gap-2 border-b border-slate-700/60 pb-2">
+                        <span class="text-xs font-mono font-bold text-purple-400">STEP ${idx + 1}</span>
+                        <span class="font-bold text-slate-100 text-sm">${escapeHtml(slot.eventTitle)}</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- PF Drop Target -->
+                        <div id="pf-target-${idx}" onclick="handleRoleSlotClick(${idx}, 'PF')" class="border-2 border-dashed border-blue-500/50 hover:border-blue-400 bg-blue-950/20 p-3 rounded-xl cursor-pointer transition-colors min-h-[60px] flex flex-col justify-center">
+                            <span class="text-[10px] uppercase font-bold text-blue-400 tracking-wider mb-1">Pilot Flying (PF)</span>
+                            <div class="slot-content text-xs text-slate-400">Click to assign selected action</div>
+                        </div>
+                        <!-- PM Drop Target -->
+                        <div id="pm-target-${idx}" onclick="handleRoleSlotClick(${idx}, 'PM')" class="border-2 border-dashed border-purple-500/50 hover:border-purple-400 bg-purple-950/20 p-3 rounded-xl cursor-pointer transition-colors min-h-[60px] flex flex-col justify-center">
+                            <span class="text-[10px] uppercase font-bold text-purple-400 tracking-wider mb-1">Pilot Monitoring (PM)</span>
+                            <div class="slot-content text-xs text-slate-400">Click to assign selected action</div>
+                        </div>
+                    </div>
+                `;
+                slotsWrapper.appendChild(card);
+            });
+            leftCol.appendChild(slotsWrapper);
+
+            // 2. Unassigned Action Pool Column
+            const rightCol = document.createElement('div');
+            rightCol.className = "flex flex-col gap-3";
+            rightCol.innerHTML = `
+                <div class="px-2 mb-1">
+                    <h2 class="text-xs font-semibold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
+                        <i data-lucide="layers" class="w-4 h-4 text-amber-400"></i>
+                        <span>Unassigned Actions &amp; Callouts</span>
+                    </h2>
+                </div>
+            `;
+
+            let roleTiles = [];
+            currentBatch.forEach((row, idx) => {
+                if (row[1]) roleTiles.push({ id: `role-tile-${idx}-pf`, text: row[1], originalRole: 'PF' });
+                if (row[2]) roleTiles.push({ id: `role-tile-${idx}-pm`, text: row[2], originalRole: 'PM' });
+            });
+            roleTiles.sort(() => Math.random() - 0.5);
+
+            const poolWrapper = document.createElement('div');
+            poolWrapper.id = "role-tiles-pool";
+            poolWrapper.className = "flex flex-col gap-2.5";
+
+            roleTiles.forEach(tile => {
+                const tileEl = document.createElement('div');
+                tileEl.id = tile.id;
+                tileEl.onclick = () => selectRoleTile(tile);
+                tileEl.className = "card-item bg-slate-800 border-2 border-slate-700 hover:border-amber-400 rounded-xl p-3 cursor-pointer text-xs font-medium text-slate-200 shadow-md flex items-center justify-between";
+                tileEl.innerHTML = `<div>${formatActionBadge(tile.text)}</div> <i data-lucide="pointer" class="w-3.5 h-3.5 text-slate-500 flex-shrink-0"></i>`;
+                poolWrapper.appendChild(tileEl);
+            });
+
+            rightCol.appendChild(poolWrapper);
+
+            container.appendChild(leftCol);
+            container.appendChild(rightCol);
+
+            // Verify Action Button
+            const actionContainer = document.createElement('div');
+            actionContainer.className = "col-span-1 lg:col-span-3 flex justify-center mt-4";
+            actionContainer.innerHTML = `
+                <button onclick="verifyRoleAssignments()" class="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm rounded-xl transition-colors shadow-lg shadow-purple-600/20 flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i> Verify Operator Task Sharing
+                </button>
+            `;
+            container.appendChild(actionContainer);
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function selectRoleTile(tile) {
+            initAudio();
+            playSound('select');
+            
+            if (selectedRoleTile) {
+                const prevEl = document.getElementById(selectedRoleTile.id);
+                if (prevEl) prevEl.classList.remove('border-amber-400', 'bg-amber-950/40');
+            }
+
+            if (selectedRoleTile && selectedRoleTile.id === tile.id) {
+                selectedRoleTile = null;
+                return;
+            }
+
+            selectedRoleTile = tile;
+            const el = document.getElementById(tile.id);
+            if (el) el.classList.add('border-amber-400', 'bg-amber-950/40');
+        }
+
+        function handleRoleSlotClick(slotIdx, role) {
+            const slot = sequenceSlots[slotIdx];
+            if (!slot) return;
+
+            const currentAssigned = (role === 'PF') ? slot.placedPF : slot.placedPM;
+
+            if (!selectedRoleTile) {
+                if (currentAssigned) {
+                    playSound('select');
+                    const tileEl = document.getElementById(currentAssigned.id);
+                    if (tileEl) tileEl.classList.remove('hidden');
+                    if (role === 'PF') slot.placedPF = null;
+                    else slot.placedPM = null;
+                    renderSlotContent(slotIdx, role);
+                }
+                return;
+            }
+
+            playSound('select');
+            if (currentAssigned) {
+                const prevTileEl = document.getElementById(currentAssigned.id);
+                if (prevTileEl) prevTileEl.classList.remove('hidden');
+            }
+
+            if (role === 'PF') slot.placedPF = selectedRoleTile;
+            else slot.placedPM = selectedRoleTile;
+
+            const tileEl = document.getElementById(selectedRoleTile.id);
+            if (tileEl) {
+                tileEl.classList.add('hidden');
+                tileEl.classList.remove('border-amber-400', 'bg-amber-950/40');
+            }
+
+            selectedRoleTile = null;
+            renderSlotContent(slotIdx, role);
+        }
+
+        function renderSlotContent(slotIdx, role) {
+            const slot = sequenceSlots[slotIdx];
+            const targetId = `${role.toLowerCase()}-target-${slotIdx}`;
+            const targetEl = document.getElementById(targetId);
+            if (!targetEl) return;
+
+            const assigned = (role === 'PF') ? slot.placedPF : slot.placedPM;
+            const contentDiv = targetEl.querySelector('.slot-content');
+
+            if (assigned) {
+                targetEl.classList.remove('border-dashed', 'border-blue-500/50', 'border-purple-500/50');
+                targetEl.classList.add(role === 'PF' ? 'border-blue-500' : 'border-purple-500', role === 'PF' ? 'bg-blue-900/30' : 'bg-purple-900/30');
+                contentDiv.className = "slot-content text-xs font-semibold text-slate-100 flex items-center justify-between gap-2";
+                contentDiv.innerHTML = `<div>${formatActionBadge(assigned.text)}</div> <i data-lucide="x" class="w-3.5 h-3.5 text-slate-400 hover:text-white flex-shrink-0"></i>`;
+            } else {
+                targetEl.className = `border-2 border-dashed ${role === 'PF' ? 'border-blue-500/50 hover:border-blue-400 bg-blue-950/20' : 'border-purple-500/50 hover:border-purple-400 bg-purple-950/20'} p-3 rounded-xl cursor-pointer transition-colors min-h-[60px] flex flex-col justify-center`;
+                contentDiv.className = "slot-content text-xs text-slate-400";
+                contentDiv.innerText = "Click to assign selected action";
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function verifyRoleAssignments() {
+            totalAttempts++;
+            let batchCorrect = true;
+
+            sequenceSlots.forEach((slot, idx) => {
+                const pfCorrect = slot.placedPF && slot.placedPF.text.trim().toLowerCase() === slot.expectedPF.trim().toLowerCase();
+                const pmCorrect = slot.placedPM && slot.placedPM.text.trim().toLowerCase() === slot.expectedPM.trim().toLowerCase();
+
+                const pfEl = document.getElementById(`pf-target-${idx}`);
+                const pmEl = document.getElementById(`pm-target-${idx}`);
+
+                if (!pfCorrect) {
+                    batchCorrect = false;
+                    if (pfEl) { pfEl.classList.remove('border-blue-500', 'bg-blue-900/30'); pfEl.classList.add('border-rose-500', 'bg-rose-900/30'); }
+                } else if (pfEl) {
+                    pfEl.classList.remove('border-rose-500', 'bg-rose-900/30'); pfEl.classList.add('border-emerald-500', 'bg-emerald-900/30');
+                }
+
+                if (!pmCorrect) {
+                    batchCorrect = false;
+                    if (pmEl) { pmEl.classList.remove('border-purple-500', 'bg-purple-900/30'); pmEl.classList.add('border-rose-500', 'bg-rose-900/30'); }
+                } else if (pmEl) {
+                    pmEl.classList.remove('border-rose-500', 'bg-rose-900/30'); pmEl.classList.add('border-emerald-500', 'bg-emerald-900/30');
+                }
+            });
+
+            if (batchCorrect) {
+                correctMatchesCount++;
+                playSound('match');
+                score += 600 + (streak * 75);
                 streak++;
                 updateScoreboard();
 
@@ -1056,15 +1380,133 @@
         }
 
         /* --------------------------------------------------
-         * ACCOUNT DECK MANAGEMENT & CSV IMPORTER
+         * DECK EDITING, STORAGE & CSV ENGINE
          * -------------------------------------------------- */
         function openDeckModal() {
-            loadCustomDecksFromStorage();
+            renderDecksList();
             document.getElementById('deck-modal').classList.remove('hidden');
         }
 
         function closeDeckModal() {
             document.getElementById('deck-modal').classList.add('hidden');
+        }
+
+        function openEditDeckModal(id, currentTitle, event) {
+            if (event) event.stopPropagation();
+            editingDeckId = id;
+            document.getElementById('edit-deck-title-input').value = currentTitle;
+            document.getElementById('edit-deck-modal').classList.remove('hidden');
+        }
+
+        function closeEditDeckModal() {
+            document.getElementById('edit-deck-modal').classList.add('hidden');
+            editingDeckId = null;
+        }
+
+        function saveDeckName() {
+            const newTitle = document.getElementById('edit-deck-title-input').value.trim();
+            if (!newTitle || !editingDeckId) return;
+
+            const saved = getStoredDecks();
+            const target = saved.find(d => d.id === editingDeckId);
+            if (target) {
+                target.title = newTitle;
+                try {
+                    localStorage.setItem('aviation_account_decks', JSON.stringify(saved));
+                } catch(e) {
+                    console.warn(e);
+                }
+            }
+            closeEditDeckModal();
+            renderDecksList();
+        }
+
+        function getStoredDecks() {
+            try {
+                return JSON.parse(localStorage.getItem('aviation_account_decks') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function renderDecksList() {
+            const grid = document.getElementById('custom-decks-grid');
+            if (!grid) return;
+
+            const customDecks = getStoredDecks();
+            const allAvailableDecks = [...DEFAULT_DECKS, ...customDecks];
+            grid.innerHTML = '';
+
+            allAvailableDecks.forEach(deck => {
+                const card = document.createElement('div');
+                const isDefault = deck.id.startsWith('default-');
+                const colCount = deck.headers ? deck.headers.length : 2;
+
+                card.className = "bg-slate-900/80 border border-slate-700/80 hover:border-emerald-500 p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between group relative shadow-md";
+                card.onclick = () => loadDeck(deck);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <h5 class="font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition-colors">${escapeHtml(deck.title)}</h5>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded-full">${colCount} Cols (${deck.rows.length} items)</span>
+                        </div>
+                        <p class="text-xs text-slate-400">${escapeHtml(deck.description)}</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between pt-2 border-t border-slate-800">
+                        <span class="text-xs text-emerald-400 font-medium flex items-center gap-1">Load Deck <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
+                        <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                            ${!isDefault ? `
+                                <button onclick="openEditDeckModal('${deck.id}', '${escapeHtml(deck.title)}', event)" class="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg transition-colors" title="Rename Deck">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                            ` : ''}
+                            <button onclick="exportDeckToCSV('${deck.id}', event)" class="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded-lg transition-colors" title="Export as CSV File">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                            </button>
+                            ${!isDefault ? `
+                                <button onclick="deleteCustomDeck('${deck.id}', event)" class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors" title="Delete Deck">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function exportDeckToCSV(deckId, event) {
+            if (event) event.stopPropagation();
+            const allAvailable = [...DEFAULT_DECKS, ...getStoredDecks()];
+            const targetDeck = allAvailable.find(d => d.id === deckId);
+            if (!targetDeck) return;
+
+            let csvContent = "";
+            targetDeck.rows.forEach(row => {
+                const escapedRow = row.map(field => {
+                    let f = field.replace(/"/g, '""');
+                    if (f.includes(',') || f.includes('"') || f.includes('\n')) {
+                        f = `"${f}"`;
+                    }
+                    return f;
+                });
+                csvContent += escapedRow.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const safeTitle = targetDeck.title.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${safeTitle}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         function handleFileSelect(event) {
@@ -1085,7 +1527,7 @@
             const titleInput = document.getElementById('custom-deck-title');
             
             const text = pasteInput ? pasteInput.value.trim() : '';
-            const title = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : "Account Study Deck";
+            const title = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : "Custom Flight Deck";
             
             if (!text) return;
             parseAndSaveCSV(text, title);
@@ -1114,7 +1556,10 @@
 
             const headers = [];
             for (let i = 0; i < detectedCols; i++) {
-                headers.push(i === 0 ? "Target Item" : `Action Step ${i}`);
+                if (i === 0) headers.push("Flight Event");
+                else if (i === 1) headers.push("PF Action");
+                else if (i === 2) headers.push("PM Action");
+                else headers.push(`Step ${i}`);
             }
 
             const newDeck = {
@@ -1125,73 +1570,25 @@
                 rows: rows
             };
 
-            saveCustomDeckToStorage(newDeck);
-            loadCustomDecksFromStorage();
-            loadDeck(newDeck);
-        }
-
-        function saveCustomDeckToStorage(deck) {
+            const saved = getStoredDecks();
+            saved.push(newDeck);
             try {
-                const saved = JSON.parse(localStorage.getItem('aviation_account_decks') || '[]');
-                saved.push(deck);
                 localStorage.setItem('aviation_account_decks', JSON.stringify(saved));
             } catch (e) {
                 console.warn('Storage write error', e);
             }
-        }
 
-        function loadCustomDecksFromStorage() {
-            try {
-                const saved = JSON.parse(localStorage.getItem('aviation_account_decks') || '[]');
-                const grid = document.getElementById('custom-decks-grid');
-                const notice = document.getElementById('no-decks-notice');
-
-                if (!grid) return;
-
-                if (saved.length === 0) {
-                    grid.innerHTML = '';
-                    if (notice) notice.classList.remove('hidden');
-                    return;
-                }
-
-                if (notice) notice.classList.add('hidden');
-                grid.innerHTML = '';
-
-                saved.forEach(deck => {
-                    const card = document.createElement('div');
-                    const colCount = deck.headers ? deck.headers.length : 2;
-                    card.className = "bg-slate-900/80 border border-slate-700/80 hover:border-emerald-500 p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between group relative";
-                    card.onclick = () => loadDeck(deck);
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <h5 class="font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition-colors">${escapeHtml(deck.title)}</h5>
-                                <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded-full">${colCount} Cols (${deck.rows.length} items)</span>
-                            </div>
-                            <p class="text-xs text-slate-400">${escapeHtml(deck.description)}</p>
-                        </div>
-                        <div class="mt-3 flex items-center justify-between">
-                            <span class="text-xs text-emerald-400 font-medium flex items-center gap-1">Load & Play Deck <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
-                            <button onclick="deleteCustomDeck('${deck.id}', event)" class="text-slate-500 hover:text-rose-400 p-1" title="Delete Deck">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-                if (window.lucide) lucide.createIcons();
-            } catch (e) {
-                console.warn('Storage read error', e);
-            }
+            renderDecksList();
+            loadDeck(newDeck);
         }
 
         function deleteCustomDeck(id, event) {
             if (event) event.stopPropagation();
             try {
-                let saved = JSON.parse(localStorage.getItem('aviation_account_decks') || '[]');
+                let saved = getStoredDecks();
                 saved = saved.filter(d => d.id !== id);
                 localStorage.setItem('aviation_account_decks', JSON.stringify(saved));
-                loadCustomDecksFromStorage();
+                renderDecksList();
             } catch (e) {
                 console.warn('Storage delete error', e);
             }
